@@ -1540,6 +1540,102 @@
     }
   }
 
+  /* Daily Schedule Modal & Segmented Pills */
+  .daily-schedule-pills {
+    background: rgba(241, 245, 249, 0.85);
+    padding: 4px;
+    border-radius: 14px;
+  }
+  .daily-schedule-pills .nav-link {
+    border-radius: 10px;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  .daily-schedule-pills .nav-link.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: rgba(226, 232, 240, 0.8);
+  }
+  .daily-booking-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+  }
+  .daily-booking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  }
+  .daily-booking-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 5px;
+    background: #3b82f6;
+  }
+  .daily-booking-card.status-approved::before { background: #10b981; }
+  .daily-booking-card.status-pending::before { background: #f59e0b; }
+  .daily-booking-card.status-in-progress::before { background: #6366f1; }
+  .daily-booking-card.status-completed::before { background: #6b7280; }
+
+  .daily-resource-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+  }
+  .daily-resource-card.available-all-day {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+  .daily-resource-card.partial-mission {
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+  .daily-resource-card.unavailable {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    opacity: 0.75;
+  }
+
+  /* Interactive pointer on calendar day cells */
+  .fc-daygrid-day-frame {
+    cursor: pointer !important;
+    transition: background-color 0.15s ease;
+  }
+  .fc-daygrid-day-frame:hover {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+  }
+  .fc-day-today .fc-daygrid-day-frame {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+  }
+
+  @media (max-width: 576px) {
+    .daily-schedule-pills .nav-link {
+      font-size: 0.78rem;
+      padding: 6px 4px !important;
+    }
+    .daily-booking-card {
+      padding: 10px 12px;
+    }
+    .daily-resource-card {
+      padding: 10px 12px;
+    }
+  }
+
   @media screen {
     .print-only {
       display: none;
@@ -1887,6 +1983,84 @@
             <i class="fas fa-print me-1"></i> พิมพ์ใบขอใช้รถ
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal สำหรับแสดงตารางการใช้รถประจำวันเมื่อกดที่วันที่ในปฏิทิน -->
+<div class="modal fade" id="dailyScheduleModal" tabindex="-1" aria-labelledby="dailyScheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content glass-panel" style="background: rgba(255, 255, 255, 0.96); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 16px 40px rgba(0,0,0,0.15);">
+      <!-- Modal Header -->
+      <div class="modal-header border-0 pb-2 pt-3 px-3 px-md-4">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary" style="width: 40px; height: 40px; font-size: 1.2rem;">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0" id="dailyScheduleModalLabel">ตารางการใช้รถประจำวัน</h5>
+            <small class="text-muted fw-semibold" id="dailyScheduleDateDisplay">กำลังโหลดวันที่...</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Segmented Tabs / Pills (แบบ A ตามที่ผู้ใช้เลือก) -->
+      <div class="px-3 px-md-4 pt-2 pb-2 border-bottom">
+        <ul class="nav nav-pills daily-schedule-pills flex-nowrap w-100 gap-1 gap-md-2" id="dailyScheduleTabs" role="tablist">
+          <li class="nav-item flex-fill" role="presentation">
+            <button class="nav-link active w-100 text-center py-2 px-2" id="tab-daily-bookings-btn" data-bs-toggle="pill" data-bs-target="#tab-daily-bookings" type="button" role="tab" aria-controls="tab-daily-bookings" aria-selected="true">
+              <i class="fas fa-clipboard-list me-1"></i> <span class="d-none d-sm-inline">ภารกิจ</span> <span class="badge rounded-pill bg-primary ms-1" id="badge-daily-bookings-count">0</span>
+            </button>
+          </li>
+          <li class="nav-item flex-fill" role="presentation">
+            <button class="nav-link w-100 text-center py-2 px-2" id="tab-daily-vehicles-btn" data-bs-toggle="pill" data-bs-target="#tab-daily-vehicles" type="button" role="tab" aria-controls="tab-daily-vehicles" aria-selected="false">
+              <i class="fas fa-car me-1"></i> <span class="d-none d-sm-inline">ยานพาหนะ</span> <span class="badge rounded-pill bg-success ms-1" id="badge-daily-vehicles-count">0</span>
+            </button>
+          </li>
+          <li class="nav-item flex-fill" role="presentation">
+            <button class="nav-link w-100 text-center py-2 px-2" id="tab-daily-drivers-btn" data-bs-toggle="pill" data-bs-target="#tab-daily-drivers" type="button" role="tab" aria-controls="tab-daily-drivers" aria-selected="false">
+              <i class="fas fa-id-card me-1"></i> <span class="d-none d-sm-inline">คนขับ</span> <span class="badge rounded-pill bg-info ms-1" id="badge-daily-drivers-count">0</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Modal Body (Tab Panes) -->
+      <div class="modal-body p-3 p-md-4">
+        <div class="tab-content" id="dailyScheduleTabContent">
+          <!-- 1. รายการภารกิจขอใช้รถ -->
+          <div class="tab-pane fade show active" id="tab-daily-bookings" role="tabpanel" aria-labelledby="tab-daily-bookings-btn">
+            <div id="daily-bookings-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- 2. ยานพาหนะที่พร้อมใช้งานและติดภารกิจ -->
+          <div class="tab-pane fade" id="tab-daily-vehicles" role="tabpanel" aria-labelledby="tab-daily-vehicles-btn">
+            <div id="daily-vehicles-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- 3. พนักงานขับรถที่พร้อมปฏิบัติงานและติดภารกิจ -->
+          <div class="tab-pane fade" id="tab-daily-drivers" role="tabpanel" aria-labelledby="tab-daily-drivers-btn">
+            <div id="daily-drivers-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer (พร้อมปุ่มทางลัดตามข้อ 3 ที่ผู้ใช้เลือก) -->
+      <div class="modal-footer border-0 pt-0 px-3 px-md-4 pb-3 d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-light-glass px-3 py-2" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i> ปิด
+        </button>
+        <button type="button" class="btn btn-primary-glass px-3 px-md-4 py-2" id="btn-daily-quick-book" onclick="quickBookSelectedDate()">
+          <i class="fas fa-plus-circle me-1"></i> ยื่นคำขอใช้รถในวันนี้
+        </button>
       </div>
     </div>
   </div>
@@ -5924,6 +6098,10 @@ let activeManagementTab = 'vehicles';
 let cachedStaffNames = [];
 let cachedProvinces = [];
 let selectedPassengers = [];
+let dashboardVehicles = [];
+let dashboardDrivers = [];
+let dashboardEvents = [];
+let selectedDailyDate = null;
 
 // Initialize App on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -6369,6 +6547,11 @@ async function loadDashboardData() {
     animateNumber('kpi-available-vehicles', m.availableVehicles);
     animateNumber('kpi-available-drivers', m.availableDrivers);
 
+    // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
+    dashboardVehicles = res.vehicles || [];
+    dashboardDrivers = res.drivers || [];
+    dashboardEvents = res.calendarEvents || [];
+
     // เรนเดอร์ FullCalendar v6
     renderFullCalendar(res.calendarEvents || []);
 
@@ -6419,10 +6602,339 @@ function renderFullCalendar(events) {
     },
     eventClick: function(info) {
       showEventDetailModal(info.event.extendedProps.bookingId);
+    },
+    dateClick: function(info) {
+      openDailyScheduleModal(info.dateStr);
     }
   });
 
   currentCalendar.render();
+}
+
+/**
+ * เปิด Modal ตารางการใช้รถประจำวันเมื่อคลิกที่วันที่ในปฏิทิน
+ */
+function openDailyScheduleModal(dateStr) {
+  selectedDailyDate = dateStr;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+
+  const thaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  const thaiDayNames = [
+    'วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'
+  ];
+
+  const dayOfWeek = dateObj.getDay();
+  const dayName = thaiDayNames[dayOfWeek];
+  const monthName = thaiMonths[m - 1];
+  const yearBE = y + 543;
+  const thaiFormattedDate = `${dayName}ที่ ${d} ${monthName} ${yearBE}`;
+
+  const dateDisplay = document.getElementById('dailyScheduleDateDisplay');
+  if (dateDisplay) {
+    dateDisplay.innerHTML = `<i class="far fa-calendar-alt text-primary me-1"></i> ${thaiFormattedDate}`;
+  }
+
+  // คำนวณช่วงเวลาเริ่มต้นและสิ้นสุดของวันนั้น (00:00:00 - 23:59:59)
+  const startOfDay = new Date(y, m - 1, d, 0, 0, 0);
+  const endOfDay = new Date(y, m - 1, d, 23, 59, 59);
+
+  // ค้นหาภารกิจที่คาบเกี่ยวกับวันนั้น
+  const dayBookings = dashboardEvents.filter(ev => {
+    const s = new Date(ev.start);
+    const e = ev.end ? new Date(ev.end) : s;
+    return s <= endOfDay && e >= startOfDay;
+  });
+
+  // อัปเดตตัวเลข Badge แท็บภารกิจ
+  const badgeBookings = document.getElementById('badge-daily-bookings-count');
+  if (badgeBookings) badgeBookings.innerText = dayBookings.length;
+
+  // 1. เรนเดอร์ แท็บภารกิจ (Tab Bookings)
+  const bookingsListEl = document.getElementById('daily-bookings-list');
+  if (bookingsListEl) {
+    if (dayBookings.length === 0) {
+      bookingsListEl.innerHTML = `
+        <div class="text-center py-4 px-3 bg-light rounded-4 border border-dashed my-2">
+          <div class="display-6 text-success mb-2"><i class="fas fa-calendar-check"></i></div>
+          <h6 class="fw-bold text-dark mb-1">ไม่มีรายการขอใช้รถในวันนี้</h6>
+          <p class="text-muted small mb-3">ยานพาหนะและพนักงานขับรถพร้อมให้บริการเต็มรูปแบบ</p>
+          <button class="btn btn-sm btn-primary-glass px-3" onclick="quickBookSelectedDate()">
+            <i class="fas fa-plus-circle me-1"></i> ยื่นคำขอใช้รถในวันนี้
+          </button>
+        </div>
+      `;
+    } else {
+      let bHtml = '';
+      dayBookings.forEach(ev => {
+        const props = ev.extendedProps || {};
+        const s = new Date(ev.start);
+        const e = ev.end ? new Date(ev.end) : s;
+
+        // คำนวณช่วงเวลาในวันนั้น
+        const startTimeStr = s < startOfDay ? '00:00' : s.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const endTimeStr = e > endOfDay ? '23:59 (ข้ามวัน)' : e.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const timeRangeText = `${startTimeStr} - ${endTimeStr} น.`;
+
+        // สไตล์สถานะ
+        let statusClass = 'status-approved';
+        let statusBadge = `<span class="badge bg-success">${props.status}</span>`;
+        if (['รอหัวหน้าอนุมัติ', 'รอรอง ผอ. อนุมัติ', 'รอ ผอ. อนุมัติ', 'รอจัดสรร'].includes(props.status)) {
+          statusClass = 'status-pending';
+          statusBadge = `<span class="badge bg-warning text-dark">${props.status}</span>`;
+        } else if (props.status === 'อยู่ระหว่างใช้งาน') {
+          statusClass = 'status-in-progress';
+          statusBadge = `<span class="badge" style="background:#6366f1;">${props.status}</span>`;
+        } else if (props.status === 'เสร็จสิ้นภารกิจ') {
+          statusClass = 'status-completed';
+          statusBadge = `<span class="badge bg-secondary">${props.status}</span>`;
+        }
+
+        // ค้นหาชื่อรถและคนขับถ้ามี
+        const assignedVeh = dashboardVehicles.find(v => v.VehicleID === props.vehicleId);
+        const assignedDrv = dashboardDrivers.find(d => d.DriverID === props.driverId);
+
+        const vehText = assignedVeh ? `${assignedVeh.BrandModel} (${assignedVeh.LicensePlate})` : (props.vehicleId || 'รอจัดสรรยานพาหนะ');
+        const drvText = assignedDrv ? `${assignedDrv.FullName}` : (props.driverId || 'รอจัดสรรพนักงานขับรถ');
+
+        bHtml += `
+          <div class="daily-booking-card ${statusClass}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="badge bg-light text-dark border me-1"><i class="far fa-clock text-primary me-1"></i>${timeRangeText}</span>
+                ${statusBadge}
+              </div>
+              <button class="btn btn-sm btn-light-glass py-1 px-2.5" onclick="viewBookingDetail('${props.bookingId}')" title="ดูรายละเอียดคำขอ">
+                <i class="fas fa-eye me-1"></i><span class="small">รายละเอียด</span>
+              </button>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">
+              <i class="fas fa-map-marker-alt text-danger me-1"></i>${props.destination || ev.title}
+            </h6>
+            <div class="text-muted small mb-2">
+              <i class="fas fa-bullseye text-secondary me-1"></i>${props.purpose || '-'}
+            </div>
+            <div class="row g-2 pt-1 border-top small text-secondary">
+              <div class="col-sm-6">
+                <i class="fas fa-user text-primary me-1"></i>ผู้ขอ: <span class="text-dark fw-semibold">${props.requester || '-'}</span> (${props.department || '-'})
+              </div>
+              <div class="col-sm-6">
+                <i class="fas fa-car text-success me-1"></i>รถ: <span class="text-dark fw-semibold">${vehText}</span>
+              </div>
+              <div class="col-sm-6">
+                <i class="fas fa-id-card text-info me-1"></i>คนขับ: <span class="text-dark fw-semibold">${drvText}</span>
+              </div>
+              <div class="col-sm-6">
+                <i class="fas fa-users text-warning me-1"></i>ผู้โดยสาร: <span class="text-dark fw-semibold">${props.passengers || 1} คน</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      bookingsListEl.innerHTML = bHtml;
+    }
+  }
+
+  // 2. เรนเดอร์ แท็บยานพาหนะ (Tab Vehicles) - คิดตามช่วงเวลา (แบบที่ 2)
+  let availableVehiclesCount = 0;
+  const vehiclesListEl = document.getElementById('daily-vehicles-list');
+  if (vehiclesListEl) {
+    if (dashboardVehicles.length === 0) {
+      vehiclesListEl.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบข้อมูลยานพาหนะในระบบ</div>';
+    } else {
+      let vHtml = '';
+      dashboardVehicles.forEach(v => {
+        const isOperational = (v.Status === 'พร้อมใช้งาน');
+        
+        // ค้นหาภารกิจของรถคันนี้ในวันดังกล่าว
+        const vMissions = dayBookings.filter(b => b.extendedProps && b.extendedProps.vehicleId === v.VehicleID);
+        
+        let cardClass = 'available-all-day';
+        let statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>ว่างตลอดทั้งวัน</span>';
+        let missionInfoHtml = '';
+
+        if (!isOperational) {
+          cardClass = 'unavailable';
+          statusBadge = `<span class="badge bg-secondary"><i class="fas fa-wrench me-1"></i>${v.Status}</span>`;
+        } else if (vMissions.length > 0) {
+          cardClass = 'partial-mission';
+          const timeList = vMissions.map(m => {
+            const s = new Date(m.start);
+            const e = m.end ? new Date(m.end) : s;
+            const st = s < startOfDay ? '00:00' : s.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const et = e > endOfDay ? '23:59' : e.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return `${st}-${et} น. (${m.extendedProps.destination || m.title})`;
+          }).join(', ');
+          
+          statusBadge = `<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>ติดภารกิจบางช่วงเวลา</span>`;
+          missionInfoHtml = `
+            <div class="mt-2 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small text-dark">
+              <strong>ภารกิจ:</strong> ${timeList}
+              <div class="text-success small mt-0.5"><i class="fas fa-info-circle me-1"></i>พร้อมใช้งานในช่วงเวลาอื่นที่ไม่มีภารกิจ</div>
+            </div>
+          `;
+          availableVehiclesCount++; // ยังนับว่าว่างในบางช่วงเวลา
+        } else {
+          availableVehiclesCount++; // ว่างตลอดวัน
+        }
+
+        vHtml += `
+          <div class="daily-resource-card ${cardClass}">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="vehicle-plate-badge">${v.LicensePlate}</span>
+                <div>
+                  <div class="fw-bold text-dark">${v.BrandModel || 'ยานพาหนะราชการ'}</div>
+                  <div class="text-muted small">${v.VehicleType || 'รถยนต์'} &bull; ${v.Seats ? v.Seats + ' ที่นั่ง' : 'มาตรฐาน'}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                ${statusBadge}
+                ${isOperational && vMissions.length === 0 ? `
+                  <button class="btn btn-sm btn-primary-glass py-1 px-2.5" onclick="quickBookSelectedDate('${v.VehicleID}')" title="ยื่นขอใช้คันนี้">
+                    <i class="fas fa-check me-1"></i>เลือกคันนี้
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+            ${missionInfoHtml}
+          </div>
+        `;
+      });
+      vehiclesListEl.innerHTML = vHtml;
+    }
+  }
+
+  // อัปเดตตัวเลข Badge แท็บยานพาหนะ
+  const badgeVehicles = document.getElementById('badge-daily-vehicles-count');
+  if (badgeVehicles) badgeVehicles.innerText = `${availableVehiclesCount}/${dashboardVehicles.length}`;
+
+  // 3. เรนเดอร์ แท็บพนักงานขับรถ (Tab Drivers) - คิดตามช่วงเวลา (แบบที่ 2)
+  let availableDriversCount = 0;
+  const driversListEl = document.getElementById('daily-drivers-list');
+  if (driversListEl) {
+    if (dashboardDrivers.length === 0) {
+      driversListEl.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบข้อมูลพนักงานขับรถในระบบ</div>';
+    } else {
+      let dHtml = '';
+      dashboardDrivers.forEach(d => {
+        const isOperational = (d.Status === 'พร้อมปฏิบัติงาน');
+        
+        // ค้นหาภารกิจของคนขับท่านนี้ในวันดังกล่าว
+        const dMissions = dayBookings.filter(b => b.extendedProps && b.extendedProps.driverId === d.DriverID);
+        
+        let cardClass = 'available-all-day';
+        let statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>ว่างตลอดทั้งวัน</span>';
+        let missionInfoHtml = '';
+
+        if (!isOperational) {
+          cardClass = 'unavailable';
+          statusBadge = `<span class="badge bg-secondary"><i class="fas fa-user-slash me-1"></i>${d.Status}</span>`;
+        } else if (dMissions.length > 0) {
+          cardClass = 'partial-mission';
+          const timeList = dMissions.map(m => {
+            const s = new Date(m.start);
+            const e = m.end ? new Date(m.end) : s;
+            const st = s < startOfDay ? '00:00' : s.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const et = e > endOfDay ? '23:59' : e.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return `${st}-${et} น. (${m.extendedProps.destination || m.title})`;
+          }).join(', ');
+          
+          statusBadge = `<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>ปฏิบัติหน้าที่บางช่วงเวลา</span>`;
+          missionInfoHtml = `
+            <div class="mt-2 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small text-dark">
+              <strong>ภารกิจ:</strong> ${timeList}
+              <div class="text-success small mt-0.5"><i class="fas fa-info-circle me-1"></i>พร้อมปฏิบัติงานในช่วงเวลาอื่นที่ไม่มีภารกิจ</div>
+            </div>
+          `;
+          availableDriversCount++;
+        } else {
+          availableDriversCount++;
+        }
+
+        dHtml += `
+          <div class="daily-resource-card ${cardClass}">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1.1rem;">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark">${d.FullName}</div>
+                  <div class="text-muted small">${d.DriverType || 'พนักงานขับรถ'} ${d.Phone ? `&bull; <a href="tel:${d.Phone}" class="text-decoration-none text-primary"><i class="fas fa-phone-alt me-1"></i>${d.Phone}</a>` : ''}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                ${statusBadge}
+                ${d.Phone ? `
+                  <a href="tel:${d.Phone}" class="btn btn-sm btn-light-glass py-1 px-2.5 text-primary" title="โทรหาคนขับ">
+                    <i class="fas fa-phone-alt me-1"></i>โทร
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+            ${missionInfoHtml}
+          </div>
+        `;
+      });
+      driversListEl.innerHTML = dHtml;
+    }
+  }
+
+  // อัปเดตตัวเลข Badge แท็บคนขับ
+  const badgeDrivers = document.getElementById('badge-daily-drivers-count');
+  if (badgeDrivers) badgeDrivers.innerText = `${availableDriversCount}/${dashboardDrivers.length}`;
+
+  // รีเซ็ตให้เลือกแท็บแรก (ภารกิจ) ทุกครั้งที่เปิด
+  const firstTabBtn = document.getElementById('tab-daily-bookings-btn');
+  if (firstTabBtn) {
+    const tab = new bootstrap.Tab(firstTabBtn);
+    tab.show();
+  }
+
+  // แสดง Modal
+  const modalEl = document.getElementById('dailyScheduleModal');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+}
+
+/**
+ * ทางลัดยื่นคำขอใช้รถในวันที่เลือก (Quick Action)
+ */
+function quickBookSelectedDate(vehicleId = null) {
+  // 1. ปิด Daily Schedule Modal
+  const modalEl = document.getElementById('dailyScheduleModal');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.hide();
+  }
+
+  // 2. นำทางไปยังหน้าแบบฟอร์มขอใช้รถ
+  navigateTo('booking');
+
+  // 3. ตั้งค่าวันที่เดินทางใน ThaiDatePicker
+  if (selectedDailyDate) {
+    const [y, m, d] = selectedDailyDate.split('-').map(Number);
+    const startDate = new Date(y, m - 1, d, 8, 30);
+    const endDate = new Date(y, m - 1, d, 16, 30);
+
+    if (ThaiDatePicker.instances['bookingStartDateTime']) {
+      ThaiDatePicker.instances['bookingStartDateTime'].setDate(startDate);
+    }
+    if (ThaiDatePicker.instances['bookingEndDateTime']) {
+      ThaiDatePicker.instances['bookingEndDateTime'].setDate(endDate);
+    }
+  }
+
+  // 4. เลื่อนจอไปยังฟอร์มอย่างนุ่มนวล
+  setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 100);
 }
 
 function renderCharts(chartData) {
