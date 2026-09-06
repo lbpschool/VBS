@@ -9,7 +9,7 @@
 ### 1. สร้าง Repository บน GitHub
 1. เข้าสู่ระบบ [GitHub.com](https://github.com)
 2. กดปุ่ม **New** (สร้าง Repository ใหม่)
-3. ตั้งชื่อ เช่น `car-booking` หรือ `govfleet`
+3. ตั้งชื่อ เช่น `car-booking` หรือ `VBS`
 4. เลือกเป็น **Public** (เพื่อให้เปิดใช้ GitHub Pages ได้ฟรี)
 5. กด **Create repository**
 
@@ -29,4 +29,4 @@
    - Branch: เลือก **main** (หรือ **master**) และโฟลเดอร์เลือก **/ (root)**
 4. กดปุ่ม **Save**
 5. รอประมาณ 1-2 นาที รีเฟรชหน้า จะปรากฏแถบสีเขียวพร้อมลิงก์เว็บไซต์ของท่าน เช่น:  
-   `https://<username>.github.io/govfleet/`
+   `https://<username>.github.io/VBS/`
