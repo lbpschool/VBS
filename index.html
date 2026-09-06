@@ -1673,6 +1673,52 @@
     }
   }
 
+  /* Driver Assignment Cards in Modal (All Screen Sizes) */
+  .driver-assign-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #ffffff;
+    border-radius: 12px;
+  }
+  .driver-assign-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    transform: translateY(-1.5px);
+  }
+  .driver-assign-card:has(.form-check-input:checked) {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+  }
+  .driver-assign-card.border-info:has(.form-check-input:checked) {
+    background-color: rgba(56, 189, 248, 0.08) !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25) !important;
+  }
+  .driver-assign-thumb {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+    object-fit: cover !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: #f8fafc;
+    flex-shrink: 0 !important;
+    display: block !important;
+  }
+  @media (max-width: 576px) {
+    .driver-assign-thumb {
+      width: 54px !important;
+      height: 54px !important;
+      min-width: 54px !important;
+      max-width: 54px !important;
+      min-height: 54px !important;
+      max-height: 54px !important;
+      border-radius: 8px !important;
+    }
+  }
+
   @media screen {
     .print-only {
       display: none;
@@ -3394,6 +3440,11 @@ async function executeApproval(bookingId, action, reason) {
   }
 }
 
+// Placeholders รูปภาพรถยนต์และคนขับ
+const defaultCarSvgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='110' viewBox='0 0 160 110'%3E%3Crect width='160' height='110' fill='%23f1f5f9' rx='8'/%3E%3Cpath d='M30 65 L45 42 L115 42 L130 65 Z' fill='%23cbd5e1'/%3E%3Ccircle cx='50' cy='68' r='10' fill='%2394a3b8'/%3E%3Ccircle cx='110' cy='68' r='10' fill='%2394a3b8'/%3E%3Ctext x='80' y='92' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='11' fill='%2394a3b8'%3Eไม่มีรูปภาพ%3C/text%3E%3C/svg%3E";
+const defaultDriverSvgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f5f9' rx='12'/%3E%3Ccircle cx='50' cy='36' r='18' fill='%23cbd5e1'/%3E%3Cpath d='M22 84 C22 66 35 58 50 58 C65 58 78 66 78 84 Z' fill='%23cbd5e1'/%3E%3Ccircle cx='50' cy='36' r='7' fill='%2394a3b8'/%3E%3Ctext x='50' y='94' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='9' fill='%2394a3b8'%3Eไม่มีรูปภาพ%3C/text%3E%3C/svg%3E";
+const defaultSpecialDriverSvgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f9ff' rx='12'/%3E%3Ccircle cx='50' cy='36' r='18' fill='%23bae6fd'/%3E%3Cpath d='M22 84 C22 66 35 58 50 58 C65 58 78 66 78 84 Z' fill='%23bae6fd'/%3E%3Ccircle cx='50' cy='36' r='7' fill='%230284c7'/%3E%3Ctext x='50' y='94' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='9' fill='%230284c7'%3Eไม่มีรูปภาพ%3C/text%3E%3C/svg%3E";
+
 /**
  * เปิด Modal มอบหมายรถและคนขับ (พร้อมระบบตรวจจับ Conflict)
  */
@@ -3419,9 +3470,8 @@ async function openAssignModal(bookingId, requester, startDt, endDt) {
       return;
     }
 
-    // เรนเดอร์รายการรถ (พร้อมแสดงภาพยานพาหนะแต่ละคันอย่างพอดีสวยงาม)
+    // เรนเดอร์รายการรถ (จัดระยะห่างปุ่ม Radio และรูปภาพอย่างสมดุลพอดี)
     let vehHtml = '';
-    const defaultCarSvgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='110' viewBox='0 0 160 110'%3E%3Crect width='160' height='110' fill='%23f1f5f9' rx='8'/%3E%3Cpath d='M30 65 L45 42 L115 42 L130 65 Z' fill='%23cbd5e1'/%3E%3Ccircle cx='50' cy='68' r='10' fill='%2394a3b8'/%3E%3Ccircle cx='110' cy='68' r='10' fill='%2394a3b8'/%3E%3Ctext x='80' y='92' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='11' fill='%2394a3b8'%3Eไม่มีรูปภาพ%3C/text%3E%3C/svg%3E";
 
     res.vehicles.forEach(v => {
       const isAvail = v.isAvailable;
@@ -3434,20 +3484,20 @@ async function openAssignModal(bookingId, requester, startDt, endDt) {
 
       vehHtml += `
         <div class="col-12 col-md-6">
-          <div class="card p-2.5 px-3 border ${isAvail ? 'border-success' : 'border-danger opacity-75 bg-light'} vehicle-assign-card">
+          <div class="card border ${isAvail ? 'border-success' : 'border-danger opacity-75 bg-light'} vehicle-assign-card" style="padding: 10px 14px !important; border-radius: 12px;">
             <div class="d-flex align-items-center">
-              <!-- Radio Button -->
-              <div class="d-flex align-items-center flex-shrink-0 me-2.5">
-                <input class="form-check-input cursor-pointer" type="radio" name="selectedVehicle" id="veh_${v.VehicleID}" value="${v.VehicleID}" ${!isAvail ? 'disabled' : ''} style="width: 1.2rem; height: 1.2rem; margin: 0 !important; float: none !important;">
+              <!-- Radio Button (ระยะห่างสมดุลพอดีระหว่างขอบการ์ดและรูปภาพ) -->
+              <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="margin-right: 14px;">
+                <input class="form-check-input cursor-pointer" type="radio" name="selectedVehicle" id="veh_${v.VehicleID}" value="${v.VehicleID}" ${!isAvail ? 'disabled' : ''} style="width: 1.25rem; height: 1.25rem; margin: 0 !important; float: none !important;">
               </div>
               <!-- Clickable Area: Image + Details -->
               <label class="form-check-label flex-grow-1 min-w-0 d-flex align-items-center cursor-pointer mb-0" for="veh_${v.VehicleID}">
                 <!-- Vehicle Image -->
-                <div class="flex-shrink-0 position-relative me-3" style="width: 84px; height: 60px; min-width: 84px; max-width: 84px; min-height: 60px; max-height: 60px; overflow: hidden; border-radius: 8px;">
+                <div class="flex-shrink-0 position-relative" style="width: 84px; height: 60px; min-width: 84px; max-width: 84px; min-height: 60px; max-height: 60px; overflow: hidden; border-radius: 8px; margin-right: 14px;">
                   <img src="${vehImgUrl}" alt="${v.BrandModel}" class="vehicle-assign-thumb shadow-xs" style="width: 84px !important; height: 60px !important; min-width: 84px !important; max-width: 84px !important; min-height: 60px !important; max-height: 60px !important; object-fit: cover !important; border-radius: 8px !important; display: block;" loading="lazy" onerror="this.onerror=null; this.src='${defaultCarSvgPlaceholder}';">
                 </div>
-                <!-- Vehicle Details (ห่างออกจากรูปอย่างพอดีสวยงาม) -->
-                <div class="flex-grow-1 min-w-0 ps-1">
+                <!-- Vehicle Details (จัดระยะห่างอย่างพอดีสวยงาม) -->
+                <div class="flex-grow-1 min-w-0">
                   <div class="fw-bold text-dark text-truncate" style="font-size: 0.92rem; line-height: 1.3;" title="${v.LicensePlate} - ${v.BrandModel}">
                     ${v.LicensePlate} - ${v.BrandModel}
                   </div>
@@ -3470,25 +3520,42 @@ async function openAssignModal(bookingId, requester, startDt, endDt) {
     const regularDrivers = res.drivers.filter(d => (d.DriverType || 'พนักงานขับรถประจำ') === 'พนักงานขับรถประจำ');
     const specialDrivers = res.drivers.filter(d => d.DriverType === 'พนักงานขับรถพิเศษตามภารกิจ');
 
-    // 1. เรนเดอร์คนขับประจำ
+    // 1. เรนเดอร์คนขับประจำ (พร้อมรูปถ่ายคนขับและตำแหน่งปุ่มสมดุลสวยงาม)
     let regHtml = '';
     if (regularDrivers.length === 0) {
       regHtml = '<div class="col-12 text-muted small py-2">ยังไม่มีรายชื่อพนักงานขับรถประจำในระบบ</div>';
     } else {
       regularDrivers.forEach(d => {
         const isAvail = d.isAvailable;
+        const drvImgUrl = (d.ImageUrl && d.ImageUrl.trim() !== '') ? d.ImageUrl.trim() : defaultDriverSvgPlaceholder;
+
         regHtml += `
-          <div class="col-md-6">
-            <div class="card p-2 border ${isAvail ? 'border-success' : 'border-danger opacity-75 bg-light'}" style="border-radius:12px; background: ${isAvail ? 'rgba(16, 185, 129, 0.04)' : ''};">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="selectedDriver" id="drv_${d.DriverID}" value="${d.DriverID}" ${!isAvail ? 'disabled' : ''}>
-                <label class="form-check-label w-100" for="drv_${d.DriverID}">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <span class="fw-bold text-dark">${d.FullName}</span>
-                    <span class="badge bg-success-subtle text-success border border-success" style="font-size:0.7rem;">คนขับประจำ</span>
+          <div class="col-12 col-md-6">
+            <div class="card border ${isAvail ? 'border-success' : 'border-danger opacity-75 bg-light'} driver-assign-card" style="padding: 10px 14px !important; border-radius: 12px; background: ${isAvail ? 'rgba(16, 185, 129, 0.04)' : ''};">
+              <div class="d-flex align-items-center">
+                <!-- Radio Button (ระยะห่างสมดุลพอดีระหว่างขอบการ์ดและรูปถ่าย) -->
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="margin-right: 14px;">
+                  <input class="form-check-input cursor-pointer" type="radio" name="selectedDriver" id="drv_${d.DriverID}" value="${d.DriverID}" ${!isAvail ? 'disabled' : ''} style="width: 1.25rem; height: 1.25rem; margin: 0 !important; float: none !important;">
+                </div>
+                <!-- Clickable Area: Driver Photo + Details -->
+                <label class="form-check-label flex-grow-1 min-w-0 d-flex align-items-center cursor-pointer mb-0" for="drv_${d.DriverID}">
+                  <!-- Driver Photo Thumbnail -->
+                  <div class="flex-shrink-0 position-relative" style="width: 60px; height: 60px; min-width: 60px; max-width: 60px; min-height: 60px; max-height: 60px; overflow: hidden; border-radius: 10px; margin-right: 14px;">
+                    <img src="${drvImgUrl}" alt="${d.FullName}" class="driver-assign-thumb shadow-xs" style="width: 60px !important; height: 60px !important; min-width: 60px !important; max-width: 60px !important; min-height: 60px !important; max-height: 60px !important; object-fit: cover !important; border-radius: 10px !important; display: block;" loading="lazy" onerror="this.onerror=null; this.src='${defaultDriverSvgPlaceholder}';">
                   </div>
-                  <small class="text-muted d-block">โทร: ${d.Phone || '-'} | ${d.LicenseType || 'ใบขับขี่'}</small>
-                  ${isAvail ? '<span class="badge bg-success-subtle text-success mt-1"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>' : `<span class="badge bg-danger-subtle text-danger mt-1 text-wrap text-start"><i class="fas fa-ban me-1"></i>${d.conflictReason}</span>`}
+                  <!-- Driver Details -->
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center justify-content-between gap-1">
+                      <span class="fw-bold text-dark text-truncate" style="font-size: 0.92rem; line-height: 1.3;" title="${d.FullName}">${d.FullName}</span>
+                      <span class="badge bg-success-subtle text-success border border-success border-opacity-25 flex-shrink-0" style="font-size: 0.68rem;">คนขับประจำ</span>
+                    </div>
+                    <div class="text-muted text-truncate mt-0.5" style="font-size: 0.78rem;">
+                      <i class="fas fa-phone-alt me-1 text-primary opacity-75"></i>${d.Phone || '-'} <span class="mx-1 text-black-50">|</span> <i class="fas fa-id-card me-1 text-secondary opacity-75"></i>${d.LicenseType || 'ใบขับขี่'}
+                    </div>
+                    <div class="mt-1.5">
+                      ${isAvail ? '<span class="badge bg-success-subtle text-success border border-success border-opacity-25" style="font-size: 0.7rem;"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>' : `<span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 text-wrap text-start" style="font-size: 0.68rem;"><i class="fas fa-ban me-1"></i>${d.conflictReason}</span>`}
+                    </div>
+                  </div>
                 </label>
               </div>
             </div>
@@ -3498,35 +3565,7 @@ async function openAssignModal(bookingId, requester, startDt, endDt) {
     }
     document.getElementById('assignDriverRegularList').innerHTML = regHtml;
 
-    // 2. เรนเดอร์คนขับพิเศษตามภารกิจ
-    let spHtml = '';
-    if (specialDrivers.length === 0) {
-      spHtml = '<div class="col-12 text-muted small py-2" id="emptySpecialNotice">ยังไม่มีรายชื่อคนขับพิเศษที่บันทึกไว้ (สามารถเลือกจากรายชื่อบุคลากรด้านบนเพื่อมอบหมายได้)</div>';
-    } else {
-      specialDrivers.forEach(d => {
-        const isAvail = d.isAvailable;
-        spHtml += `
-          <div class="col-md-6" id="special_card_${d.DriverID}">
-            <div class="card p-2 border ${isAvail ? 'border-info' : 'border-danger opacity-75 bg-light'}" style="border-radius:12px; background: ${isAvail ? 'rgba(56, 189, 248, 0.04)' : ''};">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="selectedDriver" id="drv_${d.DriverID}" value="${d.DriverID}" ${!isAvail ? 'disabled' : ''}>
-                <label class="form-check-label w-100" for="drv_${d.DriverID}">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <span class="fw-bold text-dark">${d.FullName}</span>
-                    <span class="badge bg-info-subtle text-info border border-info" style="font-size:0.7rem;">คนขับพิเศษ</span>
-                  </div>
-                  <small class="text-muted d-block">โทร: ${d.Phone || '-'} | ${d.LicenseType || 'ตามภารกิจ'}</small>
-                  ${isAvail ? '<span class="badge bg-info-subtle text-info mt-1"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>' : `<span class="badge bg-danger-subtle text-danger mt-1 text-wrap text-start"><i class="fas fa-ban me-1"></i>${d.conflictReason}</span>`}
-                </label>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    }
-    document.getElementById('assignDriverSpecialList').innerHTML = spHtml;
-
-    // 3. เตรียมรายชื่อคนขับพิเศษที่ลงทะเบียนไว้เท่านั้นสำหรับค้นหา (Type to Search)
+    // 2. เตรียมรายชื่อคนขับพิเศษตามภารกิจ
     currentSpecialDriversList = specialDrivers;
     renderSpecialDriversCards(specialDrivers);
 
@@ -3554,7 +3593,7 @@ function renderSpecialDriversCards(list) {
 
   if (list.length === 0) {
     container.innerHTML = `
-      <div class="col-12 text-center text-muted py-4">
+      <div class="col-12 text-center text-muted py-4" id="emptySpecialNotice">
         <i class="fas fa-user-tag fa-2x mb-2 text-secondary"></i>
         <div>ยังไม่มีการลงทะเบียนคนขับพิเศษตามภารกิจในระบบ</div>
         <small class="text-muted">กรุณาไปที่เมนู <b>จัดการระบบ & รถยนต์ ➔ รายชื่อพนักงานขับรถ</b> เพื่อเลือกบุคลากรมาเป็นคนขับพิเศษ</small>
@@ -3566,18 +3605,35 @@ function renderSpecialDriversCards(list) {
   let spHtml = '';
   list.forEach(d => {
     const isAvail = d.isAvailable;
+    const drvImgUrl = (d.ImageUrl && d.ImageUrl.trim() !== '') ? d.ImageUrl.trim() : defaultSpecialDriverSvgPlaceholder;
+
     spHtml += `
-      <div class="col-md-6" id="special_card_${d.DriverID}">
-        <div class="card p-2 border ${isAvail ? 'border-info' : 'border-danger opacity-75 bg-light'}" style="border-radius:12px; background: ${isAvail ? 'rgba(56, 189, 248, 0.04)' : ''};">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="selectedDriver" id="drv_${d.DriverID}" value="${d.DriverID}" ${!isAvail ? 'disabled' : ''}>
-            <label class="form-check-label w-100" for="drv_${d.DriverID}">
-              <div class="d-flex align-items-center justify-content-between">
-                <span class="fw-bold text-dark">${d.FullName}</span>
-                <span class="badge bg-info-subtle text-info border border-info" style="font-size:0.7rem;">คนขับพิเศษ</span>
+      <div class="col-12 col-md-6" id="special_card_${d.DriverID}">
+        <div class="card border ${isAvail ? 'border-info' : 'border-danger opacity-75 bg-light'} driver-assign-card" style="padding: 10px 14px !important; border-radius: 12px; background: ${isAvail ? 'rgba(56, 189, 248, 0.04)' : ''};">
+          <div class="d-flex align-items-center">
+            <!-- Radio Button (ระยะห่างสมดุลพอดีระหว่างขอบการ์ดและรูปถ่าย) -->
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="margin-right: 14px;">
+              <input class="form-check-input cursor-pointer" type="radio" name="selectedDriver" id="drv_${d.DriverID}" value="${d.DriverID}" ${!isAvail ? 'disabled' : ''} style="width: 1.25rem; height: 1.25rem; margin: 0 !important; float: none !important;">
+            </div>
+            <!-- Clickable Area: Photo + Details -->
+            <label class="form-check-label flex-grow-1 min-w-0 d-flex align-items-center cursor-pointer mb-0" for="drv_${d.DriverID}">
+              <!-- Driver Photo Thumbnail -->
+              <div class="flex-shrink-0 position-relative" style="width: 60px; height: 60px; min-width: 60px; max-width: 60px; min-height: 60px; max-height: 60px; overflow: hidden; border-radius: 10px; margin-right: 14px;">
+                <img src="${drvImgUrl}" alt="${d.FullName}" class="driver-assign-thumb shadow-xs" style="width: 60px !important; height: 60px !important; min-width: 60px !important; max-width: 60px !important; min-height: 60px !important; max-height: 60px !important; object-fit: cover !important; border-radius: 10px !important; display: block;" loading="lazy" onerror="this.onerror=null; this.src='${defaultSpecialDriverSvgPlaceholder}';">
               </div>
-              <small class="text-muted d-block">โทร: ${d.Phone || '-'} | ${d.LicenseType || 'คนขับพิเศษ'}</small>
-              ${isAvail ? '<span class="badge bg-info-subtle text-info mt-1"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>' : `<span class="badge bg-danger-subtle text-danger mt-1 text-wrap text-start"><i class="fas fa-ban me-1"></i>${d.conflictReason}</span>`}
+              <!-- Driver Details -->
+              <div class="flex-grow-1 min-w-0">
+                <div class="d-flex align-items-center justify-content-between gap-1">
+                  <span class="fw-bold text-dark text-truncate" style="font-size: 0.92rem; line-height: 1.3;" title="${d.FullName}">${d.FullName}</span>
+                  <span class="badge bg-info-subtle text-info border border-info border-opacity-25 flex-shrink-0" style="font-size: 0.68rem;">คนขับพิเศษ</span>
+                </div>
+                <div class="text-muted text-truncate mt-0.5" style="font-size: 0.78rem;">
+                  <i class="fas fa-phone-alt me-1 text-primary opacity-75"></i>${d.Phone || '-'} <span class="mx-1 text-black-50">|</span> <i class="fas fa-id-card me-1 text-secondary opacity-75"></i>${d.LicenseType || 'ตามภารกิจ'}
+                </div>
+                <div class="mt-1.5">
+                  ${isAvail ? '<span class="badge bg-info-subtle text-info border border-info border-opacity-25" style="font-size: 0.7rem;"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>' : `<span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 text-wrap text-start" style="font-size: 0.68rem;"><i class="fas fa-ban me-1"></i>${d.conflictReason}</span>`}
+                </div>
+              </div>
             </label>
           </div>
         </div>
@@ -3707,18 +3763,34 @@ function handlePickSpecialStaffDriver(val) {
       existingRadio.checked = true;
     } else {
       const deptText = (staff.dept && staff.dept !== 'บุคลากร') ? staff.dept : '';
+      const photoSrc = (staff.imageUrl || staff.ImageUrl || '').trim() || defaultSpecialDriverSvgPlaceholder;
       const cardHtml = `
-        <div class="col-md-6" id="special_card_${staff.id}">
-          <div class="card p-2 border border-info" style="border-radius:12px; background: rgba(56, 189, 248, 0.08);">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="selectedDriver" id="drv_${staff.id}" value="${staff.id}" checked>
-              <label class="form-check-label w-100" for="drv_${staff.id}">
-                <div class="d-flex align-items-center justify-content-between">
-                  <span class="fw-bold text-dark">${staff.name}</span>
-                  <span class="badge bg-primary text-white" style="font-size:0.7rem;">เลือกใหม่ตามภารกิจ</span>
+        <div class="col-12 col-md-6" id="special_card_${staff.id}">
+          <div class="card border border-info driver-assign-card" style="padding: 10px 14px !important; border-radius: 12px; background: rgba(56, 189, 248, 0.08);">
+            <div class="d-flex align-items-center">
+              <!-- Radio Button (ระยะห่างสมดุลพอดีระหว่างขอบการ์ดและรูปถ่าย) -->
+              <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="margin-right: 14px;">
+                <input class="form-check-input cursor-pointer" type="radio" name="selectedDriver" id="drv_${staff.id}" value="${staff.id}" checked style="width: 1.25rem; height: 1.25rem; margin: 0 !important; float: none !important;">
+              </div>
+              <!-- Clickable Area: Photo + Details -->
+              <label class="form-check-label flex-grow-1 min-w-0 d-flex align-items-center cursor-pointer mb-0" for="drv_${staff.id}">
+                <!-- Driver Photo Thumbnail -->
+                <div class="flex-shrink-0 position-relative" style="width: 60px; height: 60px; min-width: 60px; max-width: 60px; min-height: 60px; max-height: 60px; overflow: hidden; border-radius: 10px; margin-right: 14px;">
+                  <img src="${photoSrc}" alt="${staff.name}" class="driver-assign-thumb shadow-xs" style="width: 60px !important; height: 60px !important; min-width: 60px !important; max-width: 60px !important; min-height: 60px !important; max-height: 60px !important; object-fit: cover !important; border-radius: 10px !important; display: block;" loading="lazy" onerror="this.onerror=null; this.src='${defaultSpecialDriverSvgPlaceholder}';">
                 </div>
-                ${deptText || staff.phone ? `<small class="text-muted d-block">${deptText} ${staff.phone ? `| โทร: ${staff.phone}` : ''}</small>` : ''}
-                <span class="badge bg-info-subtle text-info mt-1"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>
+                <!-- Driver Details -->
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center justify-content-between gap-1">
+                    <span class="fw-bold text-dark text-truncate" style="font-size: 0.92rem; line-height: 1.3;" title="${staff.name}">${staff.name}</span>
+                    <span class="badge bg-primary text-white flex-shrink-0" style="font-size: 0.68rem;">เลือกใหม่ตามภารกิจ</span>
+                  </div>
+                  <div class="text-muted text-truncate mt-0.5" style="font-size: 0.78rem;">
+                    ${deptText ? `<i class="fas fa-building me-1 text-secondary opacity-75"></i>${deptText}` : ''} ${staff.phone ? `<span class="mx-1 text-black-50">|</span> <i class="fas fa-phone-alt me-1 text-primary opacity-75"></i>${staff.phone}` : ''}
+                  </div>
+                  <div class="mt-1.5">
+                    <span class="badge bg-info-subtle text-info border border-info border-opacity-25" style="font-size: 0.7rem;"><i class="fas fa-check-circle me-1"></i>พร้อมปฏิบัติงาน</span>
+                  </div>
+                </div>
               </label>
             </div>
           </div>
