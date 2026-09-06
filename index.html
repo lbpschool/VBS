@@ -1757,6 +1757,23 @@
     }
   }
 
+  /* Approval & Assignment Mobile Card Styling */
+  .approval-mobile-card,
+  .assignment-mobile-card {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .approval-mobile-card:active,
+  .assignment-mobile-card:active {
+    transform: scale(0.99);
+  }
+  #view-approval {
+    padding-bottom: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   @media screen {
     .print-only {
       display: none;
@@ -3077,16 +3094,17 @@ function showEventDetailModal(bookingId) {
     <h5 class="fw-bold text-dark mb-3">
       <i class="fas fa-hourglass-half text-warning me-2"></i>รายการรอการพิจารณาอนุมัติ
     </h5>
-    <div class="table-responsive">
+    <!-- Desktop Table View (หน้าจอคอมพิวเตอร์และแท็บเล็ต) -->
+    <div class="table-responsive d-none d-md-block">
       <table class="table table-glass table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th>รหัสคำขอ</th>
+            <th style="white-space: nowrap;">รหัสคำขอ</th>
             <th>ผู้ขอ / หน่วยงาน</th>
             <th>ปลายทาง / วัตถุประสงค์</th>
-            <th>วัน-เวลา เดินทาง</th>
-            <th>ขั้นตอนปัจจุบัน</th>
-            <th class="text-center">การพิจารณา</th>
+            <th style="white-space: nowrap;">วัน-เวลา เดินทาง</th>
+            <th style="white-space: nowrap;">ขั้นตอนปัจจุบัน</th>
+            <th class="text-center" style="white-space: nowrap;">การพิจารณา</th>
           </tr>
         </thead>
         <tbody id="approvalTableBody">
@@ -3095,6 +3113,11 @@ function showEventDetailModal(bookingId) {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile Card View (หน้าจอมือถือ แสดงการ์ดที่อ่านง่าย สบายตา จัดระเบียบครบถ้วน) -->
+    <div class="d-md-none" id="approvalMobileCards">
+      <div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลดข้อมูล...</div>
     </div>
   </div>
 
@@ -3108,16 +3131,17 @@ function showEventDetailModal(bookingId) {
     </div>
     <p class="text-muted small mb-3">รายการคำขอสำหรับจัดสรรยานพาหนะ พร้อมระบบตรวจสอบคิวชนกันอัตโนมัติ</p>
 
-    <div class="table-responsive">
+    <!-- Desktop Table View -->
+    <div class="table-responsive d-none d-md-block">
       <table class="table table-glass table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th>รหัสคำขอ</th>
+            <th style="white-space: nowrap;">รหัสคำขอ</th>
             <th>ผู้ขอ / เบอร์โทร</th>
             <th>ปลายทาง</th>
-            <th>วัน-เวลา เดินทาง</th>
-            <th>ผู้โดยสาร</th>
-            <th class="text-center">ดำเนินการจัดสรร</th>
+            <th style="white-space: nowrap;">วัน-เวลา เดินทาง</th>
+            <th style="white-space: nowrap;">ผู้โดยสาร</th>
+            <th class="text-center" style="white-space: nowrap;">ดำเนินการจัดสรร</th>
           </tr>
         </thead>
         <tbody id="assignmentTableBody">
@@ -3126,6 +3150,11 @@ function showEventDetailModal(bookingId) {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="d-md-none" id="assignmentMobileCards">
+      <div class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-2"></i>ไม่มีรายการรอจัดสรร</div>
     </div>
   </div>
 </div>
@@ -3257,20 +3286,51 @@ async function loadApprovalConsole() {
 
   const approvalTbody = document.getElementById('approvalTableBody');
   const assignTbody = document.getElementById('assignmentTableBody');
-  approvalTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</td></tr>';
-  assignTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</td></tr>';
+  const approvalMobile = document.getElementById('approvalMobileCards');
+  const assignMobile = document.getElementById('assignmentMobileCards');
+
+  const loadingTableHtml = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</td></tr>';
+  const loadingCardsHtml = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลดข้อมูล...</div>';
+
+  if (approvalTbody) approvalTbody.innerHTML = loadingTableHtml;
+  if (assignTbody) assignTbody.innerHTML = loadingTableHtml;
+  if (approvalMobile) approvalMobile.innerHTML = loadingCardsHtml;
+  if (assignMobile) assignMobile.innerHTML = loadingCardsHtml;
 
   try {
     const allBookings = await runGAS('apiSearchBookings', '', 'ALL');
     renderApprovalQueues(allBookings || []);
   } catch (err) {
-    approvalTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+    if (approvalTbody) approvalTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+    if (approvalMobile) approvalMobile.innerHTML = `<div class="text-center text-danger py-4">เกิดข้อผิดพลาด: ${err.message}</div>`;
+  }
+}
+
+/**
+ * แปลงวันเวลาเป็นรูปแบบภาษาไทยที่อ่านง่ายและกะทัดรัด
+ */
+function formatApprovalDateTime(dtStr) {
+  if (!dtStr) return '-';
+  try {
+    const cleanStr = dtStr.replace(' ', 'T');
+    const d = new Date(cleanStr);
+    if (isNaN(d.getTime())) return dtStr.replace('T', ' ');
+    const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const day = d.getDate();
+    const month = thaiMonthsShort[d.getMonth()];
+    const year = d.getFullYear() + 543;
+    const time = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${day} ${month} ${year} (${time} น.)`;
+  } catch (e) {
+    return dtStr.replace('T', ' ');
   }
 }
 
 function renderApprovalQueues(bookings) {
   const approvalTbody = document.getElementById('approvalTableBody');
   const assignTbody = document.getElementById('assignmentTableBody');
+  const approvalMobile = document.getElementById('approvalMobileCards');
+  const assignMobile = document.getElementById('assignmentMobileCards');
   const role = currentUser ? currentUser.role : '';
 
   // สลับการแสดงผลส่วนจัดสรรรถสำหรับ Head และ Admin
@@ -3291,11 +3351,23 @@ function renderApprovalQueues(bookings) {
   });
 
   if (pendingApprovals.length === 0) {
-    approvalTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-2"></i>ไม่มีรายการค้างพิจารณาสำหรับบทบาทของคุณ</td></tr>';
+    if (approvalTbody) {
+      approvalTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-2"></i>ไม่มีรายการค้างพิจารณาสำหรับบทบาทของคุณ</td></tr>';
+    }
+    if (approvalMobile) {
+      approvalMobile.innerHTML = `
+        <div class="text-center py-4 px-3 bg-light rounded-4 border border-dashed my-2">
+          <div class="display-6 text-success mb-2"><i class="fas fa-check-circle"></i></div>
+          <h6 class="fw-bold text-dark mb-1">ไม่มีรายการค้างพิจารณา</h6>
+          <p class="text-muted small mb-0">ไม่มีคำขอที่รอการพิจารณาในบทบาทของคุณในขณะนี้</p>
+        </div>
+      `;
+    }
   } else {
-    let html = '';
+    let tableHtml = '';
+    let cardsHtml = '';
+
     pendingApprovals.forEach(b => {
-      // ปุ่มดำเนินการสำหรับแต่ละ Role
       const canDelete = ['Admin', 'Head'].includes(role);
       const deleteBtn = canDelete ? `
         <button class="btn btn-outline-danger" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
@@ -3304,10 +3376,12 @@ function renderApprovalQueues(bookings) {
       ` : '';
 
       let actionButtons = '';
+      let mobileActionButtons = '';
+
       if (b.CurrentStage === 'รอหัวหน้าอนุมัติ') {
         actionButtons = `
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-primary-glass" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+            <button class="btn btn-primary-glass text-nowrap" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
               <i class="fas fa-clipboard-check me-1"></i> มอบหมายรถ/คนขับ
             </button>
             <button class="btn btn-outline-danger" onclick="actionApprove('${b.BookingID}', 'REJECTED')" title="ไม่อนุมัติ">
@@ -3316,17 +3390,45 @@ function renderApprovalQueues(bookings) {
             ${deleteBtn}
           </div>
         `;
+
+        mobileActionButtons = `
+          <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+            <i class="fas fa-clipboard-check me-1.5"></i> มอบหมายรถ/คนขับ
+          </button>
+          <button class="btn btn-outline-danger py-2 px-3 fw-semibold" onclick="actionApprove('${b.BookingID}', 'REJECTED')">
+            <i class="fas fa-times me-1"></i> ไม่อนุมัติ
+          </button>
+          ${canDelete ? `
+            <button class="btn btn-outline-secondary py-2 px-2.5" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          ` : ''}
+        `;
       } else {
         actionButtons = `
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-success" onclick="actionApprove('${b.BookingID}', 'APPROVED')">
+            <button class="btn btn-outline-success text-nowrap" onclick="actionApprove('${b.BookingID}', 'APPROVED')">
               <i class="fas fa-check me-1"></i> อนุมัติ
             </button>
-            <button class="btn btn-outline-danger" onclick="actionApprove('${b.BookingID}', 'REJECTED')">
+            <button class="btn btn-outline-danger text-nowrap" onclick="actionApprove('${b.BookingID}', 'REJECTED')">
               <i class="fas fa-times me-1"></i> ไม่อนุมัติ
             </button>
             ${deleteBtn}
           </div>
+        `;
+
+        mobileActionButtons = `
+          <button class="btn btn-success flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="actionApprove('${b.BookingID}', 'APPROVED')">
+            <i class="fas fa-check me-1.5"></i> อนุมัติคำขอ
+          </button>
+          <button class="btn btn-outline-danger py-2 px-3 fw-semibold" onclick="actionApprove('${b.BookingID}', 'REJECTED')">
+            <i class="fas fa-times me-1"></i> ไม่อนุมัติ
+          </button>
+          ${canDelete ? `
+            <button class="btn btn-outline-secondary py-2 px-2.5" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          ` : ''}
         `;
       }
 
@@ -3335,7 +3437,7 @@ function renderApprovalQueues(bookings) {
       if (b.vehiclePlate && b.vehiclePlate !== '-') {
         assignedInfo += `
           <div class="small mt-1 text-primary fw-medium">
-            <i class="fas fa-car me-1"></i>${b.vehicleModel} (${b.vehiclePlate})
+            <i class="fas fa-car me-1"></i>${b.vehicleModel || 'รถยนต์'} (${b.vehiclePlate})
           </div>
         `;
       }
@@ -3347,53 +3449,147 @@ function renderApprovalQueues(bookings) {
         `;
       }
 
-      html += `
+      // ป้ายแสดงสถานะ
+      let stageBadge = `<span class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill shadow-xs"><i class="fas fa-clock me-1"></i>${b.CurrentStage}</span>`;
+      if (b.CurrentStage === 'รอรอง ผอ. อนุมัติ') {
+        stageBadge = `<span class="badge px-2.5 py-1.5 rounded-pill text-white shadow-xs" style="background:#0284c7;"><i class="fas fa-user-check me-1"></i>${b.CurrentStage}</span>`;
+      } else if (b.CurrentStage === 'รอ ผอ. อนุมัติ') {
+        stageBadge = `<span class="badge px-2.5 py-1.5 rounded-pill text-white shadow-xs" style="background:#4f46e5;"><i class="fas fa-user-shield me-1"></i>${b.CurrentStage}</span>`;
+      }
+
+      // 1.1 เรนเดอร์ Desktop Table Row
+      tableHtml += `
         <tr>
-          <td class="fw-bold text-primary">${b.BookingID}</td>
+          <td class="fw-bold text-primary" style="white-space: nowrap;">${b.BookingID}</td>
           <td>
             <div class="fw-semibold text-dark">${b.RequesterName}</div>
             <small class="text-muted">${b.Department || ''}</small>
           </td>
           <td>
             <div class="fw-semibold text-dark">${b.Destination}</div>
-            <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">${b.Purpose}</small>
+            <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">${b.Purpose}</small>
             ${assignedInfo}
           </td>
-          <td>
-            <small class="d-block text-dark">${b.StartDateTime.replace('T', ' ')}</small>
-            <small class="d-block text-muted">ถึง ${b.EndDateTime.replace('T', ' ')}</small>
+          <td style="white-space: nowrap;">
+            <small class="d-block text-dark fw-medium">${formatApprovalDateTime(b.StartDateTime)}</small>
+            <small class="d-block text-muted">ถึง ${formatApprovalDateTime(b.EndDateTime)}</small>
           </td>
-          <td><span class="badge bg-warning text-dark">${b.CurrentStage}</span></td>
-          <td class="text-center">
+          <td style="white-space: nowrap;">${stageBadge}</td>
+          <td class="text-center" style="white-space: nowrap;">
             ${actionButtons}
           </td>
         </tr>
       `;
+
+      // 1.2 เรนเดอร์ Mobile Card
+      cardsHtml += `
+        <div class="approval-mobile-card mb-3 p-3 rounded-4 bg-white border shadow-sm">
+          <!-- แถวที่ 1: รหัสคำขอ + ขั้นตอนปัจจุบัน -->
+          <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-primary bg-opacity-10 text-primary p-1.5 rounded-2">
+                <i class="fas fa-file-signature"></i>
+              </span>
+              <span class="fw-bold text-primary fs-6">${b.BookingID}</span>
+            </div>
+            <div>${stageBadge}</div>
+          </div>
+
+          <!-- แถวที่ 2: ผู้ขอ / หน่วยงาน -->
+          <div class="d-flex align-items-start gap-2.5 mb-2.5">
+            <div class="rounded-circle bg-light border text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="min-w-0 flex-grow-1">
+              <div class="fw-bold text-dark fs-6">${b.RequesterName}</div>
+              <div class="text-muted small">
+                <i class="fas fa-building text-secondary me-1"></i>${b.Department || 'ไม่ระบุกลุ่มงาน'}
+                ${b.Phone ? ` &bull; <a href="tel:${b.Phone}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-0.5"></i>${b.Phone}</a>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- แถวที่ 3: ปลายทาง / วัตถุประสงค์ -->
+          <div class="p-2.5 rounded-3 bg-light bg-opacity-80 border border-light-subtle mb-2.5">
+            <div class="d-flex align-items-baseline gap-1.5 mb-1">
+              <i class="fas fa-map-marker-alt text-danger flex-shrink-0"></i>
+              <div class="fw-bold text-dark">${b.Destination} ${b.Province ? `<span class="text-muted fw-normal small">(${b.Province})</span>` : ''}</div>
+            </div>
+            <div class="small text-secondary ps-3.5">
+              <span class="fw-medium text-dark">วัตถุประสงค์:</span> ${b.Purpose || '-'}
+            </div>
+            ${assignedInfo ? `<div class="mt-2 pt-2 border-top ps-3.5">${assignedInfo}</div>` : ''}
+          </div>
+
+          <!-- แถวที่ 4: วัน-เวลา เดินทาง -->
+          <div class="row g-2 mb-3 small">
+            <div class="col-12 col-sm-6">
+              <div class="p-2 rounded-2 border bg-white d-flex align-items-center gap-2">
+                <i class="far fa-calendar-alt text-primary fs-5 flex-shrink-0"></i>
+                <div class="min-w-0">
+                  <div class="text-muted" style="font-size: 0.75rem;">วันเวลาเริ่มเดินทาง</div>
+                  <div class="fw-semibold text-dark">${formatApprovalDateTime(b.StartDateTime)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="p-2 rounded-2 border bg-white d-flex align-items-center gap-2">
+                <i class="far fa-calendar-check text-success fs-5 flex-shrink-0"></i>
+                <div class="min-w-0">
+                  <div class="text-muted" style="font-size: 0.75rem;">วันเวลาสิ้นสุด</div>
+                  <div class="fw-semibold text-dark">${formatApprovalDateTime(b.EndDateTime)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- แถวที่ 5: การพิจารณา (ปุ่ม Action Buttons) -->
+          <div class="pt-2 border-top d-flex flex-wrap gap-2 justify-content-end align-items-center">
+            ${mobileActionButtons}
+          </div>
+        </div>
+      `;
     });
-    approvalTbody.innerHTML = html;
+
+    if (approvalTbody) approvalTbody.innerHTML = tableHtml;
+    if (approvalMobile) approvalMobile.innerHTML = cardsHtml;
   }
 
   // 2. รายการรอจัดสรรรถ (สำหรับ Head และ Admin)
   const pendingAssignments = bookings.filter(b => b.Status === 'รอจัดสรร');
   if (pendingAssignments.length === 0) {
-    assignTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-2"></i>ไม่มีคำขอที่ค้างรอจัดสรรยานพาหนะ</td></tr>';
+    if (assignTbody) {
+      assignTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-2"></i>ไม่มีคำขอที่ค้างรอจัดสรรยานพาหนะ</td></tr>';
+    }
+    if (assignMobile) {
+      assignMobile.innerHTML = `
+        <div class="text-center py-4 px-3 bg-light rounded-4 border border-dashed my-2">
+          <div class="display-6 text-success mb-2"><i class="fas fa-check-circle"></i></div>
+          <h6 class="fw-bold text-dark mb-1">ไม่มีคำขอค้างรอจัดสรร</h6>
+          <p class="text-muted small mb-0">คำขอทั้งหมดได้รับการจัดสรรยานพาหนะและคนขับเรียบร้อยแล้ว</p>
+        </div>
+      `;
+    }
   } else {
-    let html = '';
+    let assignTableHtml = '';
+    let assignCardsHtml = '';
+
     pendingAssignments.forEach(b => {
-      html += `
+      // 2.1 เรนเดอร์ Desktop Table Row
+      assignTableHtml += `
         <tr>
-          <td class="fw-bold text-primary">${b.BookingID}</td>
+          <td class="fw-bold text-primary" style="white-space: nowrap;">${b.BookingID}</td>
           <td>
             <div class="fw-semibold text-dark">${b.RequesterName}</div>
             <small class="text-muted">${b.Phone}</small>
           </td>
           <td>${b.Destination} (${b.Province || '-'})</td>
-          <td>
-            <small class="d-block text-dark">${b.StartDateTime.replace('T', ' ')}</small>
-            <small class="d-block text-muted">ถึง ${b.EndDateTime.replace('T', ' ')}</small>
+          <td style="white-space: nowrap;">
+            <small class="d-block text-dark fw-medium">${formatApprovalDateTime(b.StartDateTime)}</small>
+            <small class="d-block text-muted">ถึง ${formatApprovalDateTime(b.EndDateTime)}</small>
           </td>
-          <td><span class="badge bg-light text-dark border">${b.Passengers} คน</span></td>
-          <td class="text-center">
+          <td style="white-space: nowrap;"><span class="badge bg-light text-dark border">${b.Passengers} คน</span></td>
+          <td class="text-center" style="white-space: nowrap;">
             <div class="btn-group btn-group-sm">
               <button class="btn btn-sm btn-primary-glass" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
                 <i class="fas fa-clipboard-check me-1"></i> มอบหมายรถ/คนขับ
@@ -3405,8 +3601,82 @@ function renderApprovalQueues(bookings) {
           </td>
         </tr>
       `;
+
+      // 2.2 เรนเดอร์ Mobile Card
+      assignCardsHtml += `
+        <div class="assignment-mobile-card mb-3 p-3 rounded-4 bg-white border shadow-sm">
+          <!-- แถวที่ 1: รหัสคำขอ + สถานะ -->
+          <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-success bg-opacity-10 text-success p-1.5 rounded-2">
+                <i class="fas fa-car-side"></i>
+              </span>
+              <span class="fw-bold text-primary fs-6">${b.BookingID}</span>
+            </div>
+            <span class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill shadow-xs">
+              <i class="fas fa-hourglass-half me-1"></i>รอจัดสรร
+            </span>
+          </div>
+
+          <!-- แถวที่ 2: ผู้ขอ / เบอร์โทร -->
+          <div class="d-flex align-items-start gap-2.5 mb-2.5">
+            <div class="rounded-circle bg-light border text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="min-w-0 flex-grow-1">
+              <div class="fw-bold text-dark fs-6">${b.RequesterName}</div>
+              <div class="text-muted small">
+                <i class="fas fa-users text-warning me-1"></i>ผู้โดยสาร: <span class="fw-bold text-dark">${b.Passengers || 1} คน</span>
+                ${b.Phone ? ` &bull; <a href="tel:${b.Phone}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-0.5"></i>${b.Phone}</a>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- แถวที่ 3: ปลายทาง -->
+          <div class="p-2.5 rounded-3 bg-light bg-opacity-80 border border-light-subtle mb-2.5">
+            <div class="d-flex align-items-baseline gap-1.5">
+              <i class="fas fa-map-marker-alt text-danger flex-shrink-0"></i>
+              <div class="fw-bold text-dark">${b.Destination} <span class="text-muted fw-normal small">(${b.Province || '-'})</span></div>
+            </div>
+          </div>
+
+          <!-- แถวที่ 4: วัน-เวลา เดินทาง -->
+          <div class="row g-2 mb-3 small">
+            <div class="col-12 col-sm-6">
+              <div class="p-2 rounded-2 border bg-white d-flex align-items-center gap-2">
+                <i class="far fa-calendar-alt text-primary fs-5 flex-shrink-0"></i>
+                <div class="min-w-0">
+                  <div class="text-muted" style="font-size: 0.75rem;">วันเวลาเริ่มเดินทาง</div>
+                  <div class="fw-semibold text-dark">${formatApprovalDateTime(b.StartDateTime)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="p-2 rounded-2 border bg-white d-flex align-items-center gap-2">
+                <i class="far fa-calendar-check text-success fs-5 flex-shrink-0"></i>
+                <div class="min-w-0">
+                  <div class="text-muted" style="font-size: 0.75rem;">วันเวลาสิ้นสุด</div>
+                  <div class="fw-semibold text-dark">${formatApprovalDateTime(b.EndDateTime)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- แถวที่ 5: การจัดสรร -->
+          <div class="pt-2 border-top d-flex gap-2 justify-content-end align-items-center">
+            <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+              <i class="fas fa-clipboard-check me-1.5"></i> มอบหมายรถ/คนขับ
+            </button>
+            <button class="btn btn-outline-secondary py-2 px-2.5" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      `;
     });
-    assignTbody.innerHTML = html;
+
+    if (assignTbody) assignTbody.innerHTML = assignTableHtml;
+    if (assignMobile) assignMobile.innerHTML = assignCardsHtml;
   }
 }
 
