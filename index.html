@@ -189,27 +189,83 @@
     object-fit: contain;
     transition: height 0.2s ease;
   }
+  .brand-text-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+  .brand-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .brand-subtitle {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: -1px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
   @media (max-width: 576px) {
     .glass-navbar {
       padding-top: 5px !important;
       padding-bottom: 5px !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
     }
     .navbar-logo-img {
       height: 28px !important;
     }
-    .brand-title {
-      font-size: 1.15rem !important;
+    .brand-text-container {
+      max-width: 180px;
+      line-height: 1.15;
     }
-    .brand-vbs-mobile {
-      font-size: 1.25rem !important;
+    .brand-title {
+      font-size: 0.82rem !important;
       font-weight: 800 !important;
-      letter-spacing: 0.5px !important;
+      color: #0f172a !important;
+      letter-spacing: -0.35px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      line-height: 1.2 !important;
+      margin-bottom: 0 !important;
+    }
+    .brand-subtitle {
+      font-size: 0.58rem !important;
+      color: #64748b !important;
+      letter-spacing: -0.2px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      line-height: 1.1 !important;
+      margin-top: 1px !important;
+      display: block !important;
     }
     #btn-login-nav, #btn-logout-nav {
-      font-size: 0.8rem !important;
-      padding: 5px 12px !important;
-      border-radius: 12px !important;
+      font-size: 0.78rem !important;
+      padding: 5px 10px !important;
+      border-radius: 10px !important;
       white-space: nowrap !important;
+    }
+  }
+  @media (max-width: 360px) {
+    .brand-text-container {
+      max-width: 140px;
+    }
+    .brand-title {
+      font-size: 0.72rem !important;
+    }
+    .brand-subtitle {
+      font-size: 0.52rem !important;
+    }
+    #btn-login-nav, #btn-logout-nav {
+      font-size: 0.72rem !important;
+      padding: 4px 8px !important;
     }
   }
 
@@ -1483,21 +1539,18 @@
   <nav class="navbar glass-navbar px-2 px-md-3 px-lg-4 py-1.5 py-md-2 sticky-top">
     <div class="container-fluid px-0 d-flex align-items-center justify-content-between flex-nowrap">
       <!-- Left: Hamburger Toggle (Tablet/Mobile) & Brand Logo -->
-      <div class="d-flex align-items-center flex-nowrap gap-1 gap-sm-2 overflow-hidden me-2">
+      <div class="d-flex align-items-center flex-nowrap gap-1 gap-sm-2 overflow-hidden me-1 me-sm-2">
         <!-- Hamburger Menu Button for Tablet & Mobile -->
-        <button class="btn btn-light-glass d-lg-none me-1 me-sm-2 p-0 flex-shrink-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" title="เปิดเมนูหลัก" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;">
+        <button class="btn btn-light-glass d-lg-none me-1 p-0 flex-shrink-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" title="เปิดเมนูหลัก" style="width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;">
           <i class="fas fa-bars fs-6 text-dark"></i>
         </button>
 
         <!-- Brand Logo & Title -->
         <a class="navbar-brand d-flex align-items-center gap-1.5 gap-sm-2 text-decoration-none m-0 flex-nowrap" href="javascript:void(0)" onclick="navigateTo('dashboard')">
-          <img src="" alt="โลโก้ระบบ" class="app-logo-img navbar-logo-img flex-shrink-0" style="height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.12));">
-          <div class="text-truncate">
-            <div class="fw-bold fs-5 leading-none brand-title" style="color: var(--text-main); letter-spacing: -0.3px;">
-              <span class="d-none d-sm-inline">Vehicle Booking System <span style="color: var(--primary);">(VBS)</span></span>
-              <span class="d-sm-none brand-vbs-mobile" style="color: var(--primary); font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px;">VBS</span>
-            </div>
-            <div class="small text-muted d-none d-md-block brand-subtitle" style="font-size: 0.72rem; margin-top: -2px;">โรงเรียนลพบุรีปัญญานุกูล จังหวัดลพบุรี</div>
+          <img src="" alt="โลโก้ระบบ" class="app-logo-img navbar-logo-img flex-shrink-0" style="height: 40px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.12));">
+          <div class="brand-text-container text-truncate">
+            <div class="fw-bold brand-title">Vehicle Booking System</div>
+            <div class="brand-subtitle text-muted">โรงเรียนลพบุรีปัญญานุกูล จังหวัดลพบุรี</div>
           </div>
         </a>
       </div>
