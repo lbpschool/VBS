@@ -1770,10 +1770,26 @@
   .assignment-mobile-card:active {
     transform: scale(0.99);
   }
-  .approval-mobile-card .border.bg-white,
-  .assignment-mobile-card .border.bg-white {
+  .approval-mobile-subcard {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    border-color: #e2e8f0 !important;
+    margin-bottom: 8px;
+  }
+  .approval-mobile-subcard .subcard-icon {
+    width: 24px;
+    font-size: 1.15rem;
+    text-align: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   #view-approval {
     padding-bottom: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
@@ -3498,9 +3514,9 @@ function renderApprovalQueues(bookings) {
       cardsHtml += `
         <div class="approval-mobile-card mb-3 p-3 rounded-4 border shadow-sm">
           <!-- การ์ด 1: รหัสคำขอ & ขั้นตอนปัจจุบัน -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex justify-content-between align-items-center gap-2 mb-2">
-            <div class="d-flex align-items-center gap-2.5 min-w-0">
-              <i class="fas fa-file-signature text-primary fs-5 flex-shrink-0"></i>
+          <div class="approval-mobile-subcard justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2 min-w-0">
+              <span class="subcard-icon text-primary"><i class="fas fa-file-signature"></i></span>
               <div class="min-w-0">
                 <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
                 <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
@@ -3513,8 +3529,8 @@ function renderApprovalQueues(bookings) {
           </div>
 
           <!-- การ์ด 2: ผู้ขอ / หน่วยงาน -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 mb-2">
-            <i class="far fa-user text-primary fs-5 flex-shrink-0 mt-0.5"></i>
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-primary"><i class="far fa-user"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ผู้ขอใช้รถ${deptMobile ? ' / หน่วยงาน' : ''}</div>
               <div class="fw-semibold text-dark fs-6">${b.RequesterName}</div>
@@ -3529,8 +3545,8 @@ function renderApprovalQueues(bookings) {
           </div>
 
           <!-- การ์ด 3: ปลายทาง / วัตถุประสงค์ -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 mb-2">
-            <i class="fas fa-map-marker-alt text-danger fs-5 flex-shrink-0 mt-0.5"></i>
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-danger"><i class="fas fa-map-marker-alt"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ปลายทาง / วัตถุประสงค์</div>
               <div class="fw-semibold text-dark fs-6">${b.Destination} ${b.Province ? `<span class="text-muted fw-normal small">(${b.Province})</span>` : ''}</div>
@@ -3544,8 +3560,8 @@ function renderApprovalQueues(bookings) {
           <!-- การ์ด 4 & 5: วัน-เวลา เดินทาง -->
           <div class="row g-2 mb-3 small">
             <div class="col-12 col-sm-6">
-              <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 h-100">
-                <i class="far fa-calendar-alt text-primary fs-5 flex-shrink-0 mt-0.5"></i>
+              <div class="approval-mobile-subcard h-100 mb-0">
+                <span class="subcard-icon text-primary"><i class="far fa-calendar-alt"></i></span>
                 <div class="min-w-0">
                   <div class="text-muted" style="font-size: 0.75rem;">วันเวลาเริ่มเดินทาง</div>
                   <div class="fw-semibold text-dark">${formatApprovalDateTime(b.StartDateTime)}</div>
@@ -3553,8 +3569,8 @@ function renderApprovalQueues(bookings) {
               </div>
             </div>
             <div class="col-12 col-sm-6">
-              <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 h-100">
-                <i class="far fa-calendar-check text-success fs-5 flex-shrink-0 mt-0.5"></i>
+              <div class="approval-mobile-subcard h-100 mb-0">
+                <span class="subcard-icon text-success"><i class="far fa-calendar-check"></i></span>
                 <div class="min-w-0">
                   <div class="text-muted" style="font-size: 0.75rem;">วันเวลาสิ้นสุด</div>
                   <div class="fw-semibold text-dark">${formatApprovalDateTime(b.EndDateTime)}</div>
@@ -3626,9 +3642,9 @@ function renderApprovalQueues(bookings) {
       assignCardsHtml += `
         <div class="assignment-mobile-card mb-3 p-3 rounded-4 border shadow-sm">
           <!-- การ์ด 1: รหัสคำขอ & สถานะ -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex justify-content-between align-items-center gap-2 mb-2">
-            <div class="d-flex align-items-center gap-2.5 min-w-0">
-              <i class="fas fa-car-side text-success fs-5 flex-shrink-0"></i>
+          <div class="approval-mobile-subcard justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2 min-w-0">
+              <span class="subcard-icon text-success"><i class="fas fa-car-side"></i></span>
               <div class="min-w-0">
                 <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
                 <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
@@ -3643,8 +3659,8 @@ function renderApprovalQueues(bookings) {
           </div>
 
           <!-- การ์ด 2: ผู้ขอ / จำนวนผู้โดยสาร -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 mb-2">
-            <i class="far fa-user text-success fs-5 flex-shrink-0 mt-0.5"></i>
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-success"><i class="far fa-user"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ผู้ขอใช้รถ</div>
               <div class="fw-semibold text-dark fs-6">${b.RequesterName}</div>
@@ -3656,8 +3672,8 @@ function renderApprovalQueues(bookings) {
           </div>
 
           <!-- การ์ด 3: ปลายทาง -->
-          <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 mb-2">
-            <i class="fas fa-map-marker-alt text-danger fs-5 flex-shrink-0 mt-0.5"></i>
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-danger"><i class="fas fa-map-marker-alt"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ปลายทาง</div>
               <div class="fw-semibold text-dark fs-6">${b.Destination} <span class="text-muted fw-normal small">(${b.Province || '-'})</span></div>
@@ -3667,8 +3683,8 @@ function renderApprovalQueues(bookings) {
           <!-- การ์ด 4 & 5: วัน-เวลา เดินทาง -->
           <div class="row g-2 mb-3 small">
             <div class="col-12 col-sm-6">
-              <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 h-100">
-                <i class="far fa-calendar-alt text-primary fs-5 flex-shrink-0 mt-0.5"></i>
+              <div class="approval-mobile-subcard h-100 mb-0">
+                <span class="subcard-icon text-primary"><i class="far fa-calendar-alt"></i></span>
                 <div class="min-w-0">
                   <div class="text-muted" style="font-size: 0.75rem;">วันเวลาเริ่มเดินทาง</div>
                   <div class="fw-semibold text-dark">${formatApprovalDateTime(b.StartDateTime)}</div>
@@ -3676,14 +3692,13 @@ function renderApprovalQueues(bookings) {
               </div>
             </div>
             <div class="col-12 col-sm-6">
-              <div class="p-2.5 rounded-3 border bg-white d-flex align-items-start gap-2.5 h-100">
-                <i class="far fa-calendar-check text-success fs-5 flex-shrink-0 mt-0.5"></i>
+              <div class="approval-mobile-subcard h-100 mb-0">
+                <span class="subcard-icon text-success"><i class="far fa-calendar-check"></i></span>
                 <div class="min-w-0">
                   <div class="text-muted" style="font-size: 0.75rem;">วันเวลาสิ้นสุด</div>
                   <div class="fw-semibold text-dark">${formatApprovalDateTime(b.EndDateTime)}</div>
                 </div>
               </div>
-            </div>
           </div>
 
           <!-- แถวที่ 5: การจัดสรร -->
