@@ -352,6 +352,64 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 
+  /* Glassmorphism Orange Button (สำหรับปุ่มเข้าสู่ระบบ) */
+  .btn-orange-glass {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-orange-glass:hover {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.45);
+  }
+
+  .btn-orange-glass:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(249, 115, 22, 0.25);
+  }
+
+  /* Glassmorphism Blue Button (สำหรับปุ่มตรวจสอบสถานะ) */
+  .btn-blue-glass {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-blue-glass:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
+  }
+
+  .btn-blue-glass:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+  }
+
   /* Form Elements */
   .form-control, .form-select {
     background: rgba(255, 255, 255, 0.85);
@@ -1452,7 +1510,7 @@
         </div>
 
         <!-- Login Button (Shown for Guest) -->
-        <button id="btn-login-nav" class="btn btn-primary-glass btn-sm px-2.5 px-sm-3 py-1.5" onclick="showLoginModal()">
+        <button id="btn-login-nav" class="btn btn-orange-glass btn-sm px-2.5 px-sm-3 py-1.5" onclick="showLoginModal()">
           <i class="fas fa-sign-in-alt me-1"></i> <span>เข้าสู่ระบบ</span>
         </button>
 
@@ -1607,7 +1665,7 @@
         <button class="btn btn-primary-glass flex-fill flex-lg-grow-0 py-2 py-md-1.5 px-3" onclick="navigateTo('booking')">
           <i class="fas fa-plus-circle me-1"></i> ยื่นคำขอใช้รถ
         </button>
-        <button class="btn btn-light-glass flex-fill flex-lg-grow-0 py-2 py-md-1.5 px-3" onclick="navigateTo('tracking')">
+        <button class="btn btn-blue-glass flex-fill flex-lg-grow-0 py-2 py-md-1.5 px-3" onclick="navigateTo('tracking')">
           <i class="fas fa-search me-1"></i> ตรวจสอบสถานะ
         </button>
       </div>
