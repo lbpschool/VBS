@@ -66,8 +66,9 @@
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.6/dist/sweetalert2.min.css" rel="stylesheet">
 
-  <!-- FullCalendar v6 CSS & JS -->
+  <!-- FullCalendar v6 CSS & JS + All Locales (inc. Thai) -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales-all.global.min.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -872,7 +873,10 @@
       display: flex !important;
     }
     .main-content-wrapper {
-      padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    #view-dashboard {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     }
   }
 
@@ -955,26 +959,60 @@
 
   /* FullCalendar Mobile Responsive Styles */
   @media (max-width: 767.98px) {
+    #full-calendar-container {
+      min-height: 380px;
+      width: 100% !important;
+      overflow-x: auto;
+    }
     .fc .fc-toolbar {
       flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 0.85rem !important;
     }
     .fc .fc-toolbar-chunk {
       display: flex;
       justify-content: center;
       align-items: center;
+      width: 100%;
     }
     .fc .fc-toolbar-title {
       font-size: 1.15rem !important;
+      font-weight: 700 !important;
       text-align: center;
+      color: #0f172a !important;
     }
     .fc .fc-button {
       padding: 5px 10px !important;
       font-size: 0.8rem !important;
+      border-radius: 8px !important;
     }
-    .fc .fc-view-harness {
-      min-height: 380px;
+    .fc .fc-button-group {
+      display: inline-flex;
+    }
+    .fc .fc-col-header-cell {
+      padding: 5px 0 !important;
+      font-size: 0.75rem !important;
+    }
+    .fc .fc-daygrid-day-number {
+      font-size: 0.8rem !important;
+      padding: 3px 4px !important;
+    }
+    .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+      width: 22px;
+      height: 22px;
+      font-size: 0.75rem !important;
+      margin: 2px;
+    }
+    .fc .fc-event {
+      font-size: 0.72rem !important;
+      padding: 2px 4px !important;
+      border-radius: 5px !important;
+      margin-bottom: 2px !important;
+    }
+    .fc-daygrid-day-frame {
+      min-height: 52px !important;
+      touch-action: manipulation;
     }
   }
 
@@ -2038,7 +2076,12 @@
           </div>
         </div>
         <!-- FullCalendar Render Container -->
-        <div id="full-calendar-container"></div>
+        <div id="full-calendar-container" style="min-height: 380px;">
+          <div class="text-center py-5 text-muted" id="calendarLoadingPlaceholder">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span>กำลังโหลดข้อมูลปฏิทิน...</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -6352,6 +6395,9 @@ function navigateTo(viewName) {
   // โหลดข้อมูลตามหน้า
   if (viewName === 'dashboard') {
     loadDashboardData();
+    setTimeout(() => {
+      if (currentCalendar) currentCalendar.updateSize();
+    }, 150);
   } else if (viewName === 'tracking') {
     loadTrackingBookings();
   } else if (viewName === 'approval') {
@@ -6676,6 +6722,9 @@ async function confirmDeleteBooking(bookingId) {
  */
 
 async function loadDashboardData() {
+  // 1. เรนเดอร์ปฏิทินทันที (Instant Render) จากข้อมูลแคช เพื่อให้ผู้ใช้เห็นปฏิทินทันที ไม่ต้องรอเครือข่าย
+  renderFullCalendar(dashboardEvents || []);
+
   try {
     const res = await runGAS('apiGetDashboardStats');
     if (!res || !res.success) return;
@@ -6703,8 +6752,18 @@ async function loadDashboardData() {
     dashboardDrivers = res.drivers || [];
     dashboardEvents = res.calendarEvents || [];
 
-    // เรนเดอร์ FullCalendar v6
-    renderFullCalendar(res.calendarEvents || []);
+    // 2. อัปเดตอีเวนต์บน FullCalendar ที่แสดงอยู่แล้วอย่างนุ่มนวล
+    if (currentCalendar) {
+      currentCalendar.removeAllEvents();
+      if (dashboardEvents.length > 0) {
+        currentCalendar.addEventSource(dashboardEvents);
+      }
+      setTimeout(() => {
+        if (currentCalendar) currentCalendar.updateSize();
+      }, 100);
+    } else {
+      renderFullCalendar(dashboardEvents);
+    }
 
     // เรนเดอร์ Chart.js
     renderCharts(res.charts);
@@ -6717,6 +6776,16 @@ function renderFullCalendar(events) {
   const calendarEl = document.getElementById('full-calendar-container');
   if (!calendarEl) return;
 
+  // ตรวจสอบความพร้อมของไลบรารี FullCalendar (ป้องกันกรณีสัญญาณอินเทอร์เน็ตมือถือช้า)
+  if (typeof FullCalendar === 'undefined') {
+    setTimeout(() => renderFullCalendar(events), 250);
+    return;
+  }
+
+  // ปลดข้อความสถานะกำลังโหลด
+  const placeholder = document.getElementById('calendarLoadingPlaceholder');
+  if (placeholder) placeholder.remove();
+
   if (currentCalendar) {
     currentCalendar.destroy();
   }
@@ -6727,12 +6796,13 @@ function renderFullCalendar(events) {
     initialView: 'dayGridMonth',
     locale: 'th',
     height: 'auto',
-    aspectRatio: isMobile ? 1.15 : 1.85,
-    dayMaxEvents: isMobile ? 2 : 3,
+    contentHeight: 'auto',
+    dayMaxEvents: isMobile ? 2 : 4,
+    dayMaxEventRows: isMobile ? 2 : 4,
     headerToolbar: isMobile ? {
-      left: 'prev,next',
+      left: 'prev,today,next',
       center: 'title',
-      right: 'today dayGridMonth,listMonth'
+      right: 'dayGridMonth,listMonth'
     } : {
       left: 'prev,next today',
       center: 'title',
@@ -6744,7 +6814,7 @@ function renderFullCalendar(events) {
       week: 'สัปดาห์',
       list: 'รายการ'
     },
-    events: events,
+    events: events || [],
     eventTimeFormat: {
       hour: '2-digit',
       minute: '2-digit',
@@ -6760,7 +6830,19 @@ function renderFullCalendar(events) {
   });
 
   currentCalendar.render();
+
+  // สั่งคำนวณและปรับขนาดอัตโนมัติ (สำคัญอย่างยิ่งสำหรับหน้าจอมือถือและแท็บเล็ต)
+  setTimeout(() => {
+    if (currentCalendar) currentCalendar.updateSize();
+  }, 100);
 }
+
+// อัปเดตขนาด FullCalendar เสมอเมื่อหมุนหน้าจอหรือเปลี่ยนขนาด Browser
+window.addEventListener('resize', () => {
+  if (currentCalendar) {
+    currentCalendar.updateSize();
+  }
+});
 
 /**
  * เปิด Modal ตารางการใช้รถประจำวันเมื่อคลิกที่วันที่ในปฏิทิน
