@@ -6280,6 +6280,21 @@ let dashboardVehicles = [];
 let dashboardDrivers = [];
 let dashboardEvents = [];
 let selectedDailyDate = null;
+let isDashboardDataLoading = false;
+let dashboardLoadingPromise = null;
+
+// กู้คืนข้อมูลแคช Dashboard ทันทีตั้งแต่โหลดสคริปต์ (Instant Cache Restore 0ms)
+try {
+  const _savedDashboardCache = localStorage.getItem('vbs_dashboard_cache');
+  if (_savedDashboardCache) {
+    const _parsed = JSON.parse(_savedDashboardCache);
+    if (Array.isArray(_parsed.vehicles) && _parsed.vehicles.length > 0) dashboardVehicles = _parsed.vehicles;
+    if (Array.isArray(_parsed.drivers) && _parsed.drivers.length > 0) dashboardDrivers = _parsed.drivers;
+    if (Array.isArray(_parsed.calendarEvents)) dashboardEvents = _parsed.calendarEvents;
+  }
+} catch (e) {
+  console.warn('Cannot load dashboard cache from localStorage:', e);
+}
 
 // Initialize App on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -6721,55 +6736,98 @@ async function confirmDeleteBooking(bookingId) {
  * ==============================================================================
  */
 
-async function loadDashboardData() {
+async function loadDashboardData(forceRefresh = false) {
+  if (isDashboardDataLoading && dashboardLoadingPromise && !forceRefresh) {
+    return dashboardLoadingPromise;
+  }
+
+  isDashboardDataLoading = true;
+
   // 1. เรนเดอร์ปฏิทินทันที (Instant Render) จากข้อมูลแคช เพื่อให้ผู้ใช้เห็นปฏิทินทันที ไม่ต้องรอเครือข่าย
   renderFullCalendar(dashboardEvents || []);
 
-  try {
-    const res = await runGAS('apiGetDashboardStats');
-    if (!res || !res.success) return;
-
-    const m = res.metrics;
-    // ควบคุมการแสดง KPI Metric Cards ตามบทบาท (Admin, Head, Deputy, Director, Driver เท่านั้น)
-    const kpiCardsContainer = document.getElementById('kpi-cards-container');
-    const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
-    if (kpiCardsContainer) {
-      kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
-    }
-
-    // อัปเดตตัวเลข KPI Cards เฉพาะเมื่อได้รับสิทธิ์แสดงผล
-    if (canViewKpi) {
-      animateNumber('kpi-total-bookings', m.totalBookings);
-      animateNumber('kpi-pending-approval', m.pendingApproval);
-      animateNumber('kpi-approved', m.approved);
-      animateNumber('kpi-completed', m.completed);
-      animateNumber('kpi-available-vehicles', m.availableVehicles);
-      animateNumber('kpi-available-drivers', m.availableDrivers);
-    }
-
-    // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
-    dashboardVehicles = res.vehicles || [];
-    dashboardDrivers = res.drivers || [];
-    dashboardEvents = res.calendarEvents || [];
-
-    // 2. อัปเดตอีเวนต์บน FullCalendar ที่แสดงอยู่แล้วอย่างนุ่มนวล
-    if (currentCalendar) {
-      currentCalendar.removeAllEvents();
-      if (dashboardEvents.length > 0) {
-        currentCalendar.addEventSource(dashboardEvents);
+  dashboardLoadingPromise = (async () => {
+    try {
+      const res = await runGAS('apiGetDashboardStats');
+      if (!res || !res.success) {
+        console.warn('apiGetDashboardStats returned unsuccessful:', res);
+        const modalEl = document.getElementById('dailyScheduleModal');
+        if (modalEl && modalEl.classList.contains('show') && dashboardVehicles.length === 0) {
+          showModalLoadError();
+        }
+        return res;
       }
-      setTimeout(() => {
-        if (currentCalendar) currentCalendar.updateSize();
-      }, 100);
-    } else {
-      renderFullCalendar(dashboardEvents);
-    }
 
-    // เรนเดอร์ Chart.js
-    renderCharts(res.charts);
-  } catch (err) {
-    console.error('Error loading dashboard:', err);
-  }
+      const m = res.metrics;
+      // ควบคุมการแสดง KPI Metric Cards ตามบทบาท (Admin, Head, Deputy, Director, Driver เท่านั้น)
+      const kpiCardsContainer = document.getElementById('kpi-cards-container');
+      const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
+      if (kpiCardsContainer) {
+        kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
+      }
+
+      // อัปเดตตัวเลข KPI Cards เฉพาะเมื่อได้รับสิทธิ์แสดงผล
+      if (canViewKpi && m) {
+        animateNumber('kpi-total-bookings', m.totalBookings || 0);
+        animateNumber('kpi-pending-approval', m.pendingApproval || 0);
+        animateNumber('kpi-approved', m.approved || 0);
+        animateNumber('kpi-completed', m.completed || 0);
+        animateNumber('kpi-available-vehicles', m.availableVehicles || 0);
+        animateNumber('kpi-available-drivers', m.availableDrivers || 0);
+      }
+
+      // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
+      dashboardVehicles = res.vehicles || [];
+      dashboardDrivers = res.drivers || [];
+      dashboardEvents = res.calendarEvents || [];
+
+      // บันทึกลง localStorage เพื่อให้การเปิดเว็บครั้งต่อไปแสดงผลได้ทันที 0ms
+      try {
+        localStorage.setItem('vbs_dashboard_cache', JSON.stringify({
+          vehicles: dashboardVehicles,
+          drivers: dashboardDrivers,
+          calendarEvents: dashboardEvents,
+          timestamp: Date.now()
+        }));
+      } catch (e) {}
+
+      // 2. อัปเดตอีเวนต์บน FullCalendar ที่แสดงอยู่แล้วอย่างนุ่มนวล
+      if (currentCalendar) {
+        currentCalendar.removeAllEvents();
+        if (dashboardEvents.length > 0) {
+          currentCalendar.addEventSource(dashboardEvents);
+        }
+        setTimeout(() => {
+          if (currentCalendar) currentCalendar.updateSize();
+        }, 100);
+      } else {
+        renderFullCalendar(dashboardEvents);
+      }
+
+      // เรนเดอร์ Chart.js
+      if (res.charts) {
+        renderCharts(res.charts);
+      }
+
+      // 3. หาก Modal ตารางประจำวันเปิดอยู่ ให้ทำการ re-render ข้อมูลทันที
+      const modalEl = document.getElementById('dailyScheduleModal');
+      if (modalEl && modalEl.classList.contains('show') && selectedDailyDate) {
+        renderDailyScheduleContent(selectedDailyDate);
+      }
+
+      return res;
+    } catch (err) {
+      console.error('Error loading dashboard:', err);
+      const modalEl = document.getElementById('dailyScheduleModal');
+      if (modalEl && modalEl.classList.contains('show') && dashboardVehicles.length === 0) {
+        showModalLoadError();
+      }
+    } finally {
+      isDashboardDataLoading = false;
+    }
+  })();
+
+  return dashboardLoadingPromise;
 }
 
 function renderFullCalendar(events) {
@@ -6845,9 +6903,70 @@ window.addEventListener('resize', () => {
 });
 
 /**
+ * แสดงสถานะกำลังโหลดใน Modal ตารางการใช้รถประจำวัน
+ */
+function showModalDailyLoading() {
+  const loadingHtml = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h6 class="fw-bold text-dark mb-1">กำลังโหลดข้อมูลยานพาหนะและตารางคิวรถ...</h6>
+      <p class="text-muted small mb-0">กรุณารอสักครู่ ระบบกำลังตรวจสอบข้อมูลล่าสุดจากฐานข้อมูล</p>
+    </div>
+  `;
+  const bookingsListEl = document.getElementById('daily-bookings-list');
+  const vehiclesListEl = document.getElementById('daily-vehicles-list');
+  const driversListEl = document.getElementById('daily-drivers-list');
+
+  if (bookingsListEl) bookingsListEl.innerHTML = loadingHtml;
+  if (vehiclesListEl) vehiclesListEl.innerHTML = loadingHtml;
+  if (driversListEl) driversListEl.innerHTML = loadingHtml;
+
+  const spinnerBadge = '<span class="spinner-border spinner-border-sm" style="width: 0.65rem; height: 0.65rem;" role="status"></span>';
+  const bBookings = document.getElementById('badge-daily-bookings-count');
+  const bVehicles = document.getElementById('badge-daily-vehicles-count');
+  const bDrivers = document.getElementById('badge-daily-drivers-count');
+  if (bBookings) bBookings.innerHTML = spinnerBadge;
+  if (bVehicles) bVehicles.innerHTML = spinnerBadge;
+  if (bDrivers) bDrivers.innerHTML = spinnerBadge;
+}
+
+/**
+ * แสดงสถานะโหลดผิดพลาดใน Modal พร้อมปุ่มลองใหม่อีกครั้ง
+ */
+function showModalLoadError() {
+  const errorHtml = `
+    <div class="text-center py-4 px-3 bg-light rounded-4 border border-dashed my-2">
+      <div class="display-6 text-warning mb-2"><i class="fas fa-exclamation-triangle"></i></div>
+      <h6 class="fw-bold text-dark mb-1">ไม่สามารถดึงข้อมูลได้ในขณะนี้</h6>
+      <p class="text-muted small mb-3">สัญญาณอินเทอร์เน็ตอาจขัดข้อง หรือการเชื่อมต่อฐานข้อมูลใช้เวลานานเกินไป</p>
+      <button class="btn btn-sm btn-primary-glass px-3" onclick="retryDailyScheduleLoad()">
+        <i class="fas fa-sync-alt me-1"></i> ลองใหม่อีกครั้ง
+      </button>
+    </div>
+  `;
+  const vehiclesListEl = document.getElementById('daily-vehicles-list');
+  const driversListEl = document.getElementById('daily-drivers-list');
+  if (vehiclesListEl) vehiclesListEl.innerHTML = errorHtml;
+  if (driversListEl) driversListEl.innerHTML = errorHtml;
+}
+
+/**
+ * ฟังก์ชันสำหรับกดลองโหลดข้อมูลตารางใหม่
+ */
+async function retryDailyScheduleLoad() {
+  showModalDailyLoading();
+  await loadDashboardData(true);
+  if (selectedDailyDate) {
+    renderDailyScheduleContent(selectedDailyDate);
+  }
+}
+
+/**
  * เปิด Modal ตารางการใช้รถประจำวันเมื่อคลิกที่วันที่ในปฏิทิน
  */
-function openDailyScheduleModal(dateStr) {
+async function openDailyScheduleModal(dateStr) {
   selectedDailyDate = dateStr;
   const [y, m, d] = dateStr.split('-').map(Number);
   const dateObj = new Date(y, m - 1, d);
@@ -6871,12 +6990,48 @@ function openDailyScheduleModal(dateStr) {
     dateDisplay.innerHTML = `<i class="far fa-calendar-alt text-primary me-1"></i> ${thaiFormattedDate}`;
   }
 
-  // คำนวณช่วงเวลาเริ่มต้นและสิ้นสุดของวันนั้น (00:00:00 - 23:59:59)
+  // รีเซ็ตให้เลือกแท็บแรก (ภารกิจ) ทุกครั้งที่เปิด
+  const firstTabBtn = document.getElementById('tab-daily-bookings-btn');
+  if (firstTabBtn) {
+    const tab = bootstrap.Tab.getInstance(firstTabBtn) || new bootstrap.Tab(firstTabBtn);
+    tab.show();
+  }
+
+  // แสดง Modal ทันทีเพื่อให้ผู้ใช้รู้สึกตอบสนองทันใจ
+  const modalEl = document.getElementById('dailyScheduleModal');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  // หากมีข้อมูลยานพาหนะในหน่วยความจำแล้ว ให้เรนเดอร์ทันที 0ms
+  if (dashboardVehicles && dashboardVehicles.length > 0) {
+    renderDailyScheduleContent(dateStr);
+  } else {
+    // หากยังไม่มีข้อมูล (กำลังโหลดครั้งแรก) ให้แสดงตัวหมุนโหลดก่อน แล้วรอข้อมูลมาถึง
+    showModalDailyLoading();
+    if (dashboardLoadingPromise) {
+      await dashboardLoadingPromise;
+    } else {
+      await loadDashboardData();
+    }
+    // หลังโหลดเสร็จ เรนเดอร์เนื้อหาตารางประจำวันทันที
+    if (selectedDailyDate === dateStr) {
+      renderDailyScheduleContent(dateStr);
+    }
+  }
+}
+
+/**
+ * เรนเดอร์เนื้อหาตารางการใช้รถประจำวัน (ภารกิจ, ยานพาหนะ, คนขับ)
+ */
+function renderDailyScheduleContent(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
   const startOfDay = new Date(y, m - 1, d, 0, 0, 0);
   const endOfDay = new Date(y, m - 1, d, 23, 59, 59);
 
   // ค้นหาภารกิจที่คาบเกี่ยวกับวันนั้น
-  const dayBookings = dashboardEvents.filter(ev => {
+  const dayBookings = (dashboardEvents || []).filter(ev => {
     const s = new Date(ev.start);
     const e = ev.end ? new Date(ev.end) : s;
     return s <= endOfDay && e >= startOfDay;
@@ -6927,8 +7082,8 @@ function openDailyScheduleModal(dateStr) {
         }
 
         // ค้นหาชื่อรถและคนขับถ้ามี
-        const assignedVeh = dashboardVehicles.find(v => v.VehicleID === props.vehicleId);
-        const assignedDrv = dashboardDrivers.find(d => d.DriverID === props.driverId);
+        const assignedVeh = (dashboardVehicles || []).find(v => v.VehicleID === props.vehicleId);
+        const assignedDrv = (dashboardDrivers || []).find(d => d.DriverID === props.driverId);
 
         const vehText = assignedVeh ? `${assignedVeh.BrandModel} (${assignedVeh.LicensePlate})` : (props.vehicleId || 'รอจัดสรรยานพาหนะ');
         const drvText = assignedDrv ? `${assignedDrv.FullName}` : (props.driverId || 'รอจัดสรรพนักงานขับรถ');
@@ -6975,16 +7130,16 @@ function openDailyScheduleModal(dateStr) {
   let availableVehiclesCount = 0;
   const vehiclesListEl = document.getElementById('daily-vehicles-list');
   if (vehiclesListEl) {
-    if (dashboardVehicles.length === 0) {
+    if (!dashboardVehicles || dashboardVehicles.length === 0) {
       vehiclesListEl.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบข้อมูลยานพาหนะในระบบ</div>';
     } else {
       let vHtml = '';
       dashboardVehicles.forEach(v => {
         const isOperational = (v.Status === 'พร้อมใช้งาน');
-        
+
         // ค้นหาภารกิจของรถคันนี้ในวันดังกล่าว
         const vMissions = dayBookings.filter(b => b.extendedProps && b.extendedProps.vehicleId === v.VehicleID);
-        
+
         let cardClass = 'available-all-day';
         let statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>ว่างตลอดทั้งวัน</span>';
         let missionInfoHtml = '';
@@ -7001,7 +7156,7 @@ function openDailyScheduleModal(dateStr) {
             const et = e > endOfDay ? '23:59' : e.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
             return `${st}-${et} น. (${m.extendedProps.destination || m.title})`;
           }).join(', ');
-          
+
           statusBadge = `<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>ติดภารกิจบางช่วงเวลา</span>`;
           missionInfoHtml = `
             <div class="mt-2 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small text-dark">
@@ -7046,22 +7201,22 @@ function openDailyScheduleModal(dateStr) {
 
   // อัปเดตตัวเลข Badge แท็บยานพาหนะ
   const badgeVehicles = document.getElementById('badge-daily-vehicles-count');
-  if (badgeVehicles) badgeVehicles.innerText = `${availableVehiclesCount}/${dashboardVehicles.length}`;
+  if (badgeVehicles) badgeVehicles.innerText = `${availableVehiclesCount}/${(dashboardVehicles || []).length}`;
 
   // 3. เรนเดอร์ แท็บพนักงานขับรถ (Tab Drivers) - คิดตามช่วงเวลา (แบบที่ 2)
   let availableDriversCount = 0;
   const driversListEl = document.getElementById('daily-drivers-list');
   if (driversListEl) {
-    if (dashboardDrivers.length === 0) {
+    if (!dashboardDrivers || dashboardDrivers.length === 0) {
       driversListEl.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบข้อมูลพนักงานขับรถในระบบ</div>';
     } else {
       let dHtml = '';
       dashboardDrivers.forEach(d => {
         const isOperational = (d.Status === 'พร้อมปฏิบัติงาน');
-        
+
         // ค้นหาภารกิจของคนขับท่านนี้ในวันดังกล่าว
         const dMissions = dayBookings.filter(b => b.extendedProps && b.extendedProps.driverId === d.DriverID);
-        
+
         let cardClass = 'available-all-day';
         let statusBadge = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>ว่างตลอดทั้งวัน</span>';
         let missionInfoHtml = '';
@@ -7078,7 +7233,7 @@ function openDailyScheduleModal(dateStr) {
             const et = e > endOfDay ? '23:59' : e.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
             return `${st}-${et} น. (${m.extendedProps.destination || m.title})`;
           }).join(', ');
-          
+
           statusBadge = `<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>ปฏิบัติหน้าที่บางช่วงเวลา</span>`;
           missionInfoHtml = `
             <div class="mt-2 p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small text-dark">
@@ -7091,13 +7246,27 @@ function openDailyScheduleModal(dateStr) {
           availableDriversCount++;
         }
 
+        const driverImgUrl = (d.ImageUrl && d.ImageUrl.trim() !== '') ? d.ImageUrl.trim() : '';
+        let driverAvatarHtml = '';
+        if (driverImgUrl) {
+          driverAvatarHtml = `
+            <div class="flex-shrink-0 position-relative" style="width: 44px; height: 44px; min-width: 44px; max-width: 44px; min-height: 44px; max-height: 44px; overflow: hidden; border-radius: 10px;">
+              <img src="${driverImgUrl}" alt="${d.FullName}" style="width: 44px !important; height: 44px !important; min-width: 44px !important; max-width: 44px !important; min-height: 44px !important; max-height: 44px !important; object-fit: cover !important; border-radius: 10px !important; display: block;" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center\\' style=\\'width: 44px; height: 44px; font-size: 1.2rem;\\'><i class=\\'fas fa-user\\'></i></div>';">
+            </div>
+          `;
+        } else {
+          driverAvatarHtml = `
+            <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+              <i class="fas fa-user"></i>
+            </div>
+          `;
+        }
+
         dHtml += `
           <div class="daily-resource-card ${cardClass}">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div class="d-flex align-items-center gap-2">
-                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1.1rem;">
-                  <i class="fas fa-user"></i>
-                </div>
+              <div class="d-flex align-items-center gap-2.5">
+                ${driverAvatarHtml}
                 <div>
                   <div class="fw-bold text-dark">${d.FullName}</div>
                   <div class="text-muted small">${d.DriverType || 'พนักงานขับรถ'} ${d.Phone ? `&bull; <a href="tel:${d.Phone}" class="text-decoration-none text-primary"><i class="fas fa-phone-alt me-1"></i>${d.Phone}</a>` : ''}</div>
@@ -7122,21 +7291,7 @@ function openDailyScheduleModal(dateStr) {
 
   // อัปเดตตัวเลข Badge แท็บคนขับ
   const badgeDrivers = document.getElementById('badge-daily-drivers-count');
-  if (badgeDrivers) badgeDrivers.innerText = `${availableDriversCount}/${dashboardDrivers.length}`;
-
-  // รีเซ็ตให้เลือกแท็บแรก (ภารกิจ) ทุกครั้งที่เปิด
-  const firstTabBtn = document.getElementById('tab-daily-bookings-btn');
-  if (firstTabBtn) {
-    const tab = new bootstrap.Tab(firstTabBtn);
-    tab.show();
-  }
-
-  // แสดง Modal
-  const modalEl = document.getElementById('dailyScheduleModal');
-  if (modalEl) {
-    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-    modal.show();
-  }
+  if (badgeDrivers) badgeDrivers.innerText = `${availableDriversCount}/${(dashboardDrivers || []).length}`;
 }
 
 /**
