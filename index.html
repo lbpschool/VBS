@@ -1836,8 +1836,8 @@
     </div>
   </div>
 
-  <!-- KPI Metric Cards Grid -->
-  <div class="row g-2 g-xl-3 mb-4">
+  <!-- KPI Metric Cards Grid (แสดงเฉพาะ Admin, Head, Deputy, Director, Driver) -->
+  <div class="row g-2 g-xl-3 mb-4" id="kpi-cards-container" style="display: none;">
     <!-- 1. คำขอทั้งหมด -->
     <div class="col-6 col-md-4 col-xl-2">
       <div class="metric-card h-100">
@@ -6338,6 +6338,13 @@ function updateAuthUI() {
     mgmtNavs.forEach(el => el.style.display = 'none');
   }
 
+  // ควบคุมการแสดง KPI Metric Cards บนหน้า Dashboard (เฉพาะ Admin, Head, Deputy, Director, Driver)
+  const kpiCardsContainer = document.getElementById('kpi-cards-container');
+  if (kpiCardsContainer) {
+    const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
+    kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
+  }
+
   // รีเรนเดอร์ตารางติดตามสถานะเพื่อให้ปุ่มลบแสดง/ซ่อนตาม Role
   if (typeof cachedBookings !== 'undefined' && cachedBookings.length > 0 && typeof renderTrackingTable === 'function') {
     renderTrackingTable(cachedBookings);
@@ -6539,13 +6546,22 @@ async function loadDashboardData() {
     if (!res || !res.success) return;
 
     const m = res.metrics;
-    // อัปเดตตัวเลข KPI Cards
-    animateNumber('kpi-total-bookings', m.totalBookings);
-    animateNumber('kpi-pending-approval', m.pendingApproval);
-    animateNumber('kpi-approved', m.approved);
-    animateNumber('kpi-completed', m.completed);
-    animateNumber('kpi-available-vehicles', m.availableVehicles);
-    animateNumber('kpi-available-drivers', m.availableDrivers);
+    // ควบคุมการแสดง KPI Metric Cards ตามบทบาท (Admin, Head, Deputy, Director, Driver เท่านั้น)
+    const kpiCardsContainer = document.getElementById('kpi-cards-container');
+    const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
+    if (kpiCardsContainer) {
+      kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
+    }
+
+    // อัปเดตตัวเลข KPI Cards เฉพาะเมื่อได้รับสิทธิ์แสดงผล
+    if (canViewKpi) {
+      animateNumber('kpi-total-bookings', m.totalBookings);
+      animateNumber('kpi-pending-approval', m.pendingApproval);
+      animateNumber('kpi-approved', m.approved);
+      animateNumber('kpi-completed', m.completed);
+      animateNumber('kpi-available-vehicles', m.availableVehicles);
+      animateNumber('kpi-available-drivers', m.availableDrivers);
+    }
 
     // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
     dashboardVehicles = res.vehicles || [];
