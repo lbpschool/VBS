@@ -945,6 +945,53 @@
     border-color: #4f46e5;
   }
 
+  /* DateTime Display Input Responsive Optimization */
+  .thai-datepicker-wrapper .thai-dp-input-display {
+    padding-left: 28px !important;
+    padding-right: 8px !important;
+  }
+
+  .thai-datepicker-wrapper .thai-dp-calendar-icon {
+    left: 8px !important;
+    font-size: 0.9rem !important;
+  }
+
+  @media (max-width: 576px) {
+    .thai-datepicker-wrapper .thai-dp-btn-prev,
+    .thai-datepicker-wrapper .thai-dp-btn-next,
+    .thai-datepicker-wrapper .thai-dp-prev-day,
+    .thai-datepicker-wrapper .thai-dp-next-day {
+      width: 32px !important;
+      min-width: 32px !important;
+      height: 36px !important;
+      padding: 0 !important;
+    }
+    .thai-datepicker-wrapper .thai-dp-btn-today,
+    .thai-datepicker-wrapper .thai-dp-today-btn {
+      height: 36px !important;
+      padding: 0 8px !important;
+      font-size: 0.78rem !important;
+    }
+    .thai-datepicker-wrapper .thai-dp-input-display {
+      height: 36px !important;
+      font-size: 0.82rem !important;
+      letter-spacing: -0.2px !important;
+      padding-left: 26px !important;
+      padding-right: 6px !important;
+    }
+    .thai-datepicker-wrapper .thai-dp-calendar-icon {
+      left: 7px !important;
+      font-size: 0.8rem !important;
+    }
+  }
+
+  /* Passenger Count Summary Box Animation */
+  #autoPassengerSummaryBox {
+    background: linear-gradient(135deg, rgba(238, 242, 255, 0.9), rgba(240, 253, 250, 0.9)) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    transition: all 0.25s ease-in-out;
+  }
+
   /* Custom Autocomplete Search Dropdown */
   .custom-autocomplete-menu {
     background: rgba(255, 255, 255, 0.98);
@@ -1707,8 +1754,8 @@
                       <i class="fas fa-chevron-left small"></i>
                     </button>
                     <div class="position-relative flex-grow-1">
-                      <input type="text" class="form-control text-center fw-bold thai-dp-input-display" readonly style="height: 38px; border-radius: 10px; cursor: pointer; background: #ffffff; border: 1.5px solid #10b981; color: #0f172a; font-size: 0.95rem; letter-spacing: 0.5px;" placeholder="เลือกวัน-เวลา เริ่มเดินทาง">
-                      <i class="fas fa-calendar-alt position-absolute end-0 top-50 translate-middle-y me-3 text-primary" style="pointer-events: none;"></i>
+                      <i class="fas fa-calendar-alt position-absolute start-0 top-50 translate-middle-y ms-2.5 text-primary thai-dp-calendar-icon" style="pointer-events: none; z-index: 2;"></i>
+                      <input type="text" class="form-control text-center fw-bold thai-dp-input-display" readonly style="height: 38px; border-radius: 10px; cursor: pointer; background: #ffffff; border: 1.5px solid #10b981; color: #0f172a; font-size: 0.92rem; padding-left: 28px; padding-right: 8px;" placeholder="เลือกวัน-เวลา เริ่มเดินทาง">
                     </div>
                     <button type="button" class="btn btn-outline-secondary thai-dp-btn-next d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; border-radius: 10px;" title="วันถัดไป">
                       <i class="fas fa-chevron-right small"></i>
@@ -1805,8 +1852,8 @@
                       <i class="fas fa-chevron-left small"></i>
                     </button>
                     <div class="position-relative flex-grow-1">
-                      <input type="text" class="form-control text-center fw-bold thai-dp-input-display" readonly style="height: 38px; border-radius: 10px; cursor: pointer; background: #ffffff; border: 1.5px solid #10b981; color: #0f172a; font-size: 0.95rem; letter-spacing: 0.5px;" placeholder="เลือกวัน-เวลา สิ้นสุดการเดินทาง">
-                      <i class="fas fa-calendar-alt position-absolute end-0 top-50 translate-middle-y me-3 text-primary" style="pointer-events: none;"></i>
+                      <i class="fas fa-calendar-alt position-absolute start-0 top-50 translate-middle-y ms-2.5 text-primary thai-dp-calendar-icon" style="pointer-events: none; z-index: 2;"></i>
+                      <input type="text" class="form-control text-center fw-bold thai-dp-input-display" readonly style="height: 38px; border-radius: 10px; cursor: pointer; background: #ffffff; border: 1.5px solid #10b981; color: #0f172a; font-size: 0.92rem; padding-left: 28px; padding-right: 8px;" placeholder="เลือกวัน-เวลา สิ้นสุดการเดินทาง">
                     </div>
                     <button type="button" class="btn btn-outline-secondary thai-dp-btn-next d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; border-radius: 10px;" title="วันถัดไป">
                       <i class="fas fa-chevron-right small"></i>
@@ -1901,22 +1948,7 @@
               <i class="fas fa-users me-2"></i>3. ข้อมูลผู้โดยสารและเอกสารแนบ
             </h6>
             <div class="row g-3">
-              <div class="col-md-3">
-                <label class="form-label small fw-semibold">จำนวนผู้โดยสารรวม (คน) <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0 text-muted">
-                    <i class="fas fa-user-friends text-primary"></i>
-                  </span>
-                  <input type="number" class="form-control border-start-0 text-center fw-bold text-primary fs-5" id="bookingPassengers" min="1" max="50" value="1" required>
-                  <span class="input-group-text bg-white text-muted small">คน</span>
-                </div>
-                <div class="mt-1" id="passengerCalculationHint">
-                  <small class="text-muted" style="font-size: 0.72rem;">
-                    <i class="fas fa-info-circle me-1"></i>รวมผู้ขอ 1 คน (ยังไม่มีผู้ร่วมเดินทาง)
-                  </small>
-                </div>
-              </div>
-              <div class="col-md-9 position-relative">
+              <div class="col-12 position-relative">
                 <label class="form-label small fw-semibold d-flex justify-content-between align-items-center">
                   <span>
                     <i class="fas fa-users me-1 text-primary"></i>รายชื่อผู้ร่วมเดินทาง
@@ -1957,6 +1989,24 @@
 
                 <!-- Hidden Input to store full comma-separated list of passenger names for Database/Sheets -->
                 <input type="hidden" id="bookingPassengerList" name="bookingPassengerList" value="">
+                <!-- Hidden Input เก็บจำนวนผู้โดยสารรวมอัตโนมัติ (ไม่ให้ป้อนเอง) -->
+                <input type="hidden" id="bookingPassengers" name="bookingPassengers" value="1">
+
+                <!-- แสดงจำนวนผู้โดยสารรวมอัตโนมัติ (แสดงหลังจากใส่รายชื่อผู้ร่วมทาง) -->
+                <div id="autoPassengerSummaryBox" class="mt-2.5 p-2.5 px-3 rounded-3 border bg-light d-flex align-items-center justify-content-between" style="display: none;">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary rounded-pill px-2.5 py-1.5 d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                      <i class="fas fa-users text-white"></i>
+                      <span>จำนวนผู้โดยสารรวม: <b id="autoPassengerCountText" class="text-white fs-6">1</b> คน</span>
+                    </span>
+                    <small class="text-muted" style="font-size: 0.76rem;" id="autoPassengerDetailText">
+                      (ผู้ขอใช้รถ 1 คน + ผู้ร่วมเดินทาง 0 คน)
+                    </small>
+                  </div>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.72rem;">
+                    <i class="fas fa-magic me-1"></i>คำนวณอัตโนมัติ
+                  </span>
+                </div>
               </div>
               <div class="col-12">
                 <label class="form-label small fw-semibold">แนบหนังสือขออนุมัติเดินทาง / คำสั่งราชการ (ถ้ามี)</label>
@@ -6881,13 +6931,26 @@ function initPassengerAutocomplete() {
     const autoTotal = 1 + coCount; // ผู้ขอใช้รถ 1 คน + ผู้ร่วมเดินทาง N คน
 
     if (countEl) {
-      countEl.min = Math.max(1, autoTotal);
       countEl.value = autoTotal;
+    }
 
-      if (triggerPulse) {
-        countEl.classList.remove('passenger-count-pulse');
-        void countEl.offsetWidth; // Trigger reflow for CSS animation restart
-        countEl.classList.add('passenger-count-pulse');
+    const summaryBox = document.getElementById('autoPassengerSummaryBox');
+    const countText = document.getElementById('autoPassengerCountText');
+    const detailText = document.getElementById('autoPassengerDetailText');
+
+    if (summaryBox) {
+      if (coCount > 0) {
+        summaryBox.style.display = 'flex';
+        if (countText) countText.textContent = autoTotal;
+        if (detailText) detailText.textContent = `(ผู้ขอใช้รถ 1 คน + ผู้ร่วมเดินทาง ${coCount} คน)`;
+
+        if (triggerPulse) {
+          summaryBox.classList.remove('passenger-count-pulse');
+          void summaryBox.offsetWidth;
+          summaryBox.classList.add('passenger-count-pulse');
+        }
+      } else {
+        summaryBox.style.display = 'none';
       }
     }
 
@@ -6897,14 +6960,6 @@ function initPassengerAutocomplete() {
         badgeEl.style.display = 'inline-block';
       } else {
         badgeEl.style.display = 'none';
-      }
-    }
-
-    if (hintEl) {
-      if (coCount === 0) {
-        hintEl.innerHTML = `<small class="text-muted" style="font-size: 0.72rem;"><i class="fas fa-info-circle me-1"></i>รวมผู้ขอ 1 คน (ยังไม่มีผู้ร่วมเดินทาง)</small>`;
-      } else {
-        hintEl.innerHTML = `<small class="text-success fw-semibold" style="font-size: 0.72rem;"><i class="fas fa-calculator me-1"></i>คำนวณอัตโนมัติ: ผู้ขอ 1 + ผู้ร่วมทาง ${coCount} = <b>${autoTotal} คน</b></small>`;
       }
     }
   }
@@ -6974,43 +7029,6 @@ function initPassengerAutocomplete() {
     if (dropdown) dropdown.style.display = 'none';
     renderPassengerTags(false);
   };
-
-  // รองรับกรณีผู้ขอกำหนดจำนวนผู้โดยสารเพิ่มเติม (เช่น นักเรียนหรือบุคคลทั่วไปที่ไม่มีรายชื่อ)
-  if (countEl) {
-    countEl.addEventListener('input', function() {
-      const coCount = selectedPassengers.length;
-      const minTotal = 1 + coCount;
-      const val = parseInt(this.value, 10);
-      if (hintEl && !isNaN(val)) {
-        if (val > minTotal) {
-          const extra = val - minTotal;
-          hintEl.innerHTML = `<small class="text-primary fw-semibold" style="font-size: 0.72rem;"><i class="fas fa-users me-1"></i>ผู้ขอ 1 + ผู้ร่วมทาง ${coCount} + เพิ่มเติม ${extra} = <b>${val} คน</b></small>`;
-        } else if (val === minTotal) {
-          if (coCount === 0) {
-            hintEl.innerHTML = `<small class="text-muted" style="font-size: 0.72rem;"><i class="fas fa-info-circle me-1"></i>รวมผู้ขอ 1 คน (ยังไม่มีผู้ร่วมเดินทาง)</small>`;
-          } else {
-            hintEl.innerHTML = `<small class="text-success fw-semibold" style="font-size: 0.72rem;"><i class="fas fa-calculator me-1"></i>คำนวณอัตโนมัติ: ผู้ขอ 1 + ผู้ร่วมทาง ${coCount} = <b>${minTotal} คน</b></small>`;
-          }
-        }
-      }
-    });
-
-    countEl.addEventListener('change', function() {
-      const coCount = selectedPassengers.length;
-      const minTotal = 1 + coCount;
-      let val = parseInt(this.value, 10);
-      if (isNaN(val) || val < minTotal) {
-        this.value = minTotal;
-        if (hintEl) {
-          if (coCount === 0) {
-            hintEl.innerHTML = `<small class="text-muted" style="font-size: 0.72rem;"><i class="fas fa-info-circle me-1"></i>รวมผู้ขอ 1 คน (ยังไม่มีผู้ร่วมเดินทาง)</small>`;
-          } else {
-            hintEl.innerHTML = `<small class="text-success fw-semibold" style="font-size: 0.72rem;"><i class="fas fa-calculator me-1"></i>คำนวณอัตโนมัติ: ผู้ขอ 1 + ผู้ร่วมทาง ${coCount} = <b>${minTotal} คน</b></small>`;
-          }
-        }
-      }
-    });
-  }
 
   let activeIndex = -1;
 
