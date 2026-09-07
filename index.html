@@ -2928,22 +2928,22 @@ function renderTrackingTable(bookings) {
 
     html += `
       <tr>
-        <td class="fw-bold text-primary">${b.BookingID}</td>
+        <td class="fw-bold text-primary">${escapeHtml(b.BookingID)}</td>
         <td>
-          <div class="fw-semibold text-dark">${b.RequesterName}</div>
-          <small class="text-muted">${b.Department ? `${b.Department} | ` : ''}${b.Phone || ''}</small>
+          <div class="fw-semibold text-dark">${escapeHtml(b.RequesterName)}</div>
+          <small class="text-muted">${b.Department ? `${escapeHtml(b.Department)} | ` : ''}${escapeHtml(b.Phone || '')}</small>
         </td>
         <td>
-          <div class="fw-semibold text-dark">${b.Destination} (${b.Province || '-'})</div>
-          <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">${b.Purpose}</small>
+          <div class="fw-semibold text-dark">${escapeHtml(b.Destination)} (${escapeHtml(b.Province || '-')})</div>
+          <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">${escapeHtml(b.Purpose)}</small>
         </td>
         <td>
           <small class="d-block text-dark"><i class="fas fa-play text-success me-1"></i>${startFmt}</small>
           <small class="d-block text-muted"><i class="fas fa-stop text-danger me-1"></i>${endFmt}</small>
         </td>
         <td>
-          <div class="small fw-semibold text-dark">${b.vehiclePlate !== '-' ? `${b.vehiclePlate} (${b.vehicleModel})` : '<span class="text-muted">- รอจัดสรร -</span>'}</div>
-          <small class="text-muted">${b.driverName !== '-' ? `คนขับ: ${b.driverName}` : ''}</small>
+          <div class="small fw-semibold text-dark">${b.vehiclePlate !== '-' ? `${escapeHtml(b.vehiclePlate)} (${escapeHtml(b.vehicleModel || '')})` : '<span class="text-muted">- รอจัดสรร -</span>'}</div>
+          <small class="text-muted">${b.driverName !== '-' ? `คนขับ: ${escapeHtml(b.driverName)}` : ''}</small>
         </td>
         <td>${badge}</td>
         <td class="text-center">
@@ -3015,10 +3015,10 @@ async function viewBookingDetail(bookingId) {
           <li class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
             <div>
               <span class="badge ${isApp ? 'bg-success' : 'bg-danger'} me-2">${isApp ? 'อนุมัติ' : 'ไม่อนุมัติ'}</span>
-              <b>${a.approverName}</b> (${a.role})
-              ${a.reason ? `<div class="text-muted mt-1">หมายเหตุ: ${a.reason}</div>` : ''}
+              <b>${escapeHtml(a.approverName)}</b> (${escapeHtml(a.role)})
+              ${a.reason ? `<div class="text-muted mt-1">หมายเหตุ: ${escapeHtml(a.reason)}</div>` : ''}
             </div>
-            <small class="text-muted">${a.timestamp}</small>
+            <small class="text-muted">${escapeHtml(a.timestamp)}</small>
           </li>
         `;
       });
@@ -3029,7 +3029,7 @@ async function viewBookingDetail(bookingId) {
       <div class="row g-3">
         <div class="col-sm-6">
           <div class="text-muted small">รหัสคำขอ:</div>
-          <div class="fw-bold text-primary fs-5">${b.BookingID}</div>
+          <div class="fw-bold text-primary fs-5">${escapeHtml(b.BookingID)}</div>
         </div>
         <div class="col-sm-6 text-sm-end">
           <div class="text-muted small">สถานะปัจจุบัน:</div>
@@ -3037,28 +3037,28 @@ async function viewBookingDetail(bookingId) {
         </div>
         <div class="col-md-6">
           <div class="text-muted small">ผู้ขอใช้รถ:</div>
-          <div class="fw-semibold text-dark">${b.RequesterName} ${b.Department ? `(${b.Department})` : ''}</div>
-          <small class="text-muted">โทร: ${b.Phone}</small>
+          <div class="fw-semibold text-dark">${escapeHtml(b.RequesterName)} ${b.Department ? `(${escapeHtml(b.Department)})` : ''}</div>
+          <small class="text-muted">โทร: ${escapeHtml(b.Phone || '-')}</small>
         </div>
         <div class="col-md-6">
           <div class="text-muted small">วัน-เวลา เดินทาง:</div>
-          <div class="fw-semibold text-dark">${b.StartDateTime.replace('T', ' ')} ถึง ${b.EndDateTime.replace('T', ' ')}</div>
+          <div class="fw-semibold text-dark">${escapeHtml(b.StartDateTime.replace('T', ' '))} ถึง ${escapeHtml(b.EndDateTime.replace('T', ' '))}</div>
         </div>
         <div class="col-12">
           <div class="text-muted small">วัตถุประสงค์และปลายทาง:</div>
-          <div class="text-dark">${b.Purpose} ไปยัง <b>${b.Destination} (${b.Province || '-'})</b></div>
+          <div class="text-dark">${escapeHtml(b.Purpose)} ไปยัง <b>${escapeHtml(b.Destination)} (${escapeHtml(b.Province || '-')})</b></div>
         </div>
         <div class="col-md-6">
           <div class="text-muted small">ยานพาหนะที่ได้รับจัดสรร:</div>
-          <div class="fw-semibold text-dark">${b.vehicle ? `${b.vehicle.BrandModel} (${b.vehicle.LicensePlate})` : '<span class="text-muted">- ยังไม่จัดสรร -</span>'}</div>
+          <div class="fw-semibold text-dark">${b.vehicle ? `${escapeHtml(b.vehicle.BrandModel)} (${escapeHtml(b.vehicle.LicensePlate)})` : '<span class="text-muted">- ยังไม่จัดสรร -</span>'}</div>
         </div>
         <div class="col-md-6">
           <div class="text-muted small">พนักงานขับรถ:</div>
-          <div class="fw-semibold text-dark">${b.driver ? `${b.driver.FullName} (โทร: ${b.driver.Phone})` : '<span class="text-muted">- ยังไม่จัดสรร -</span>'}</div>
+          <div class="fw-semibold text-dark">${b.driver ? `${escapeHtml(b.driver.FullName)} (โทร: ${escapeHtml(b.driver.Phone)})` : '<span class="text-muted">- ยังไม่จัดสรร -</span>'}</div>
         </div>
         ${b.DocumentUrl ? `
           <div class="col-12">
-            <a href="${b.DocumentUrl}" target="_blank" class="btn btn-sm btn-light-glass text-primary">
+            <a href="${escapeAttr(b.DocumentUrl)}" target="_blank" class="btn btn-sm btn-light-glass text-primary">
               <i class="fas fa-paperclip me-1"></i> เปิดดูเอกสารคำขอที่แนบไว้
             </a>
           </div>
@@ -3348,6 +3348,8 @@ function formatApprovalDateTime(dtStr) {
 }
 
 function renderApprovalQueues(bookings) {
+  // Phase 2 Cache: เก็บรายการคำขอไว้ในแคชหน่วยความจำสำหรับ lookup ข้อมูล
+  window._cachedApprovalBookings = bookings || [];
   const approvalTbody = document.getElementById('approvalTableBody');
   const assignTbody = document.getElementById('assignmentTableBody');
   const approvalMobile = document.getElementById('approvalMobileCards');
@@ -3402,7 +3404,7 @@ function renderApprovalQueues(bookings) {
       if (b.CurrentStage === 'รอหัวหน้าอนุมัติ') {
         actionButtons = `
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-primary-glass text-nowrap" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+            <button class="btn btn-primary-glass text-nowrap" onclick="openAssignModal('${b.BookingID}')">
               <i class="fas fa-clipboard-check me-1"></i> มอบหมายรถ/คนขับ
             </button>
             <button class="btn btn-outline-danger" onclick="actionApprove('${b.BookingID}', 'REJECTED')" title="ไม่อนุมัติ">
@@ -3413,7 +3415,7 @@ function renderApprovalQueues(bookings) {
         `;
 
         mobileActionButtons = `
-          <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+          <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}')">
             <i class="fas fa-clipboard-check me-1.5"></i> มอบหมายรถ/คนขับ
           </button>
           <button class="btn btn-outline-danger py-2 px-3 fw-semibold" onclick="actionApprove('${b.BookingID}', 'REJECTED')">
@@ -3481,14 +3483,14 @@ function renderApprovalQueues(bookings) {
       // 1.1 เรนเดอร์ Desktop Table Row
       tableHtml += `
         <tr>
-          <td class="fw-bold text-primary" style="white-space: nowrap;">${b.BookingID}</td>
+          <td class="fw-bold text-primary" style="white-space: nowrap;">${escapeHtml(b.BookingID)}</td>
           <td>
-            <div class="fw-semibold text-dark">${b.RequesterName}</div>
-            <small class="text-muted">${b.Department || ''}</small>
+            <div class="fw-semibold text-dark">${escapeHtml(b.RequesterName)}</div>
+            <small class="text-muted">${escapeHtml(b.Department || '')}</small>
           </td>
           <td>
-            <div class="fw-semibold text-dark">${b.Destination}</div>
-            <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">${b.Purpose}</small>
+            <div class="fw-semibold text-dark">${escapeHtml(b.Destination)}</div>
+            <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">${escapeHtml(b.Purpose)}</small>
             ${assignedInfo}
           </td>
           <td style="white-space: nowrap;">
@@ -3504,10 +3506,10 @@ function renderApprovalQueues(bookings) {
 
       // ข้อมูลผู้ขอสำหรับ Mobile Card (ไม่แสดง 'ไม่ระบุกลุ่มงาน' และไม่แสดงรูปไอคอนหน้าชื่อ)
       const deptMobile = (b.Department && b.Department.trim() !== '' && b.Department !== 'ไม่ระบุกลุ่มงาน' && b.Department !== '-')
-        ? `<span><i class="fas fa-building text-secondary me-1"></i>${b.Department}</span>`
+        ? `<span><i class="fas fa-building text-secondary me-1"></i>${escapeHtml(b.Department)}</span>`
         : '';
       const phoneMobile = b.Phone
-        ? `<a href="tel:${b.Phone}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-1"></i>${b.Phone}</a>`
+        ? `<a href="tel:${escapeHtml(b.Phone)}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-1"></i>${escapeHtml(b.Phone)}</a>`
         : '';
 
       // 1.2 เรนเดอร์ Mobile Card
@@ -3518,7 +3520,7 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-primary"><i class="fas fa-file-signature"></i></span>
             <div class="min-w-0">
               <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
-              <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
+              <div class="fw-bold text-primary fs-6 text-truncate">${escapeHtml(b.BookingID)}</div>
             </div>
           </div>
 
@@ -3527,7 +3529,7 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-primary"><i class="far fa-user"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ผู้ขอใช้รถ${deptMobile ? ' / หน่วยงาน' : ''}</div>
-              <div class="fw-semibold text-dark fs-6">${b.RequesterName}</div>
+              <div class="fw-semibold text-dark fs-6">${escapeHtml(b.RequesterName)}</div>
               ${(deptMobile || phoneMobile) ? `
                 <div class="small mt-0.5 d-flex align-items-center flex-wrap gap-2">
                   ${deptMobile}
@@ -3543,9 +3545,9 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-danger"><i class="fas fa-map-marker-alt"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ปลายทาง / วัตถุประสงค์</div>
-              <div class="fw-semibold text-dark fs-6">${b.Destination} ${b.Province ? `<span class="text-muted fw-normal small">(${b.Province})</span>` : ''}</div>
+              <div class="fw-semibold text-dark fs-6">${escapeHtml(b.Destination)} ${b.Province ? `<span class="text-muted fw-normal small">(${escapeHtml(b.Province)})</span>` : ''}</div>
               <div class="mt-1" style="font-size: 0.95rem;">
-                <span class="fw-bold text-dark">วัตถุประสงค์:</span> <span class="fw-bold text-dark">${b.Purpose || '-'}</span>
+                <span class="fw-bold text-dark">วัตถุประสงค์:</span> <span class="fw-bold text-dark">${escapeHtml(b.Purpose || '-')}</span>
               </div>
               ${assignedInfo ? `<div class="mt-1.5 pt-1.5 border-top">${assignedInfo}</div>` : ''}
             </div>
@@ -3608,12 +3610,12 @@ function renderApprovalQueues(bookings) {
       // 2.1 เรนเดอร์ Desktop Table Row
       assignTableHtml += `
         <tr>
-          <td class="fw-bold text-primary" style="white-space: nowrap;">${b.BookingID}</td>
+          <td class="fw-bold text-primary" style="white-space: nowrap;">${escapeHtml(b.BookingID)}</td>
           <td>
-            <div class="fw-semibold text-dark">${b.RequesterName}</div>
-            <small class="text-muted">${b.Phone}</small>
+            <div class="fw-semibold text-dark">${escapeHtml(b.RequesterName)}</div>
+            <small class="text-muted">${escapeHtml(b.Phone)}</small>
           </td>
-          <td>${b.Destination} (${b.Province || '-'})</td>
+          <td>${escapeHtml(b.Destination)} (${escapeHtml(b.Province || '-')})</td>
           <td style="white-space: nowrap;">
             <small class="d-block text-dark fw-medium">${formatApprovalDateTime(b.StartDateTime)}</small>
             <small class="d-block text-muted">ถึง ${formatApprovalDateTime(b.EndDateTime)}</small>
@@ -3621,7 +3623,7 @@ function renderApprovalQueues(bookings) {
           <td style="white-space: nowrap;"><span class="badge bg-light text-dark border">${b.Passengers} คน</span></td>
           <td class="text-center" style="white-space: nowrap;">
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-sm btn-primary-glass" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+              <button class="btn btn-sm btn-primary-glass" onclick="openAssignModal('${b.BookingID}')">
                 <i class="fas fa-clipboard-check me-1"></i> มอบหมายรถ/คนขับ
               </button>
               <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
@@ -3640,7 +3642,7 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-success"><i class="fas fa-car-side"></i></span>
             <div class="min-w-0">
               <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
-              <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
+              <div class="fw-bold text-primary fs-6 text-truncate">${escapeHtml(b.BookingID)}</div>
             </div>
           </div>
 
@@ -3649,10 +3651,10 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-success"><i class="far fa-user"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ผู้ขอใช้รถ</div>
-              <div class="fw-semibold text-dark fs-6">${b.RequesterName}</div>
+              <div class="fw-semibold text-dark fs-6">${escapeHtml(b.RequesterName)}</div>
               <div class="small mt-0.5 d-flex align-items-center flex-wrap gap-2">
                 <span><i class="fas fa-users text-warning me-1"></i>ผู้โดยสาร: <span class="fw-bold text-dark">${b.Passengers || 1} คน</span></span>
-                ${b.Phone ? `<span class="text-muted">&bull;</span><a href="tel:${b.Phone}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-1"></i>${b.Phone}</a>` : ''}
+                ${b.Phone ? `<span class="text-muted">&bull;</span><a href="tel:${escapeHtml(b.Phone)}" class="text-primary text-decoration-none fw-semibold"><i class="fas fa-phone-alt me-1"></i>${escapeHtml(b.Phone)}</a>` : ''}
               </div>
             </div>
           </div>
@@ -3662,7 +3664,7 @@ function renderApprovalQueues(bookings) {
             <span class="subcard-icon text-danger"><i class="fas fa-map-marker-alt"></i></span>
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ปลายทาง</div>
-              <div class="fw-semibold text-dark fs-6">${b.Destination} <span class="text-muted fw-normal small">(${b.Province || '-'})</span></div>
+              <div class="fw-semibold text-dark fs-6">${escapeHtml(b.Destination)} <span class="text-muted fw-normal small">(${escapeHtml(b.Province || '-')})</span></div>
             </div>
           </div>
 
@@ -3689,7 +3691,7 @@ function renderApprovalQueues(bookings) {
 
           <!-- แถวที่ 5: การจัดสรร -->
           <div class="pt-2 border-top d-flex gap-2 justify-content-end align-items-center">
-            <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}', '${b.RequesterName}', '${b.StartDateTime}', '${b.EndDateTime}')">
+            <button class="btn btn-primary-glass flex-grow-1 py-2 px-3 fw-semibold shadow-xs" onclick="openAssignModal('${b.BookingID}')">
               <i class="fas fa-clipboard-check me-1.5"></i> มอบหมายรถ/คนขับ
             </button>
             <button class="btn btn-outline-secondary py-2 px-2.5" onclick="confirmDeleteBooking('${b.BookingID}')" title="ลบคำขอ">
@@ -3787,10 +3789,21 @@ const defaultSpecialDriverSvgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='htt
  * เปิด Modal มอบหมายรถและคนขับ (พร้อมระบบตรวจจับ Conflict)
  */
 async function openAssignModal(bookingId, requester, startDt, endDt) {
+  // Phase 2 Safe Lookup: ดึงข้อมูลจากแคชในหน่วยความจำเพื่อป้องกัน Quote Injection และ SyntaxError
+  let booking = null;
+  if (window._cachedApprovalBookings && Array.isArray(window._cachedApprovalBookings)) {
+    booking = window._cachedApprovalBookings.find(b => b.BookingID === bookingId);
+  }
+  if (booking) {
+    requester = requester || booking.RequesterName || '';
+    startDt = startDt || booking.StartDateTime || '';
+    endDt = endDt || booking.EndDateTime || '';
+  }
+
   document.getElementById('assignBookingId').value = bookingId;
   document.getElementById('assignDisplayBookingId').innerText = bookingId;
-  document.getElementById('assignDisplayRequester').innerText = requester;
-  document.getElementById('assignDisplayDateTime').innerText = `${startDt.replace('T', ' ')} ถึง ${endDt.replace('T', ' ')}`;
+  document.getElementById('assignDisplayRequester').innerText = requester || '';
+  document.getElementById('assignDisplayDateTime').innerText = (startDt && endDt) ? `${startDt.replace('T', ' ')} ถึง ${endDt.replace('T', ' ')}` : '-';
 
   const modal = new bootstrap.Modal(document.getElementById('assignModal'));
   modal.show();
@@ -4999,10 +5012,17 @@ async function handleEndTripSubmit(e) {
               </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="submit" class="btn btn-primary-glass px-4">
-                <i class="fas fa-save me-1"></i> บันทึกการตั้งค่า
-              </button>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" onclick="verifyDatabaseStructure()" id="btnVerifyDb" style="border-radius: 8px; font-size: 0.82rem;" title="ตรวจสอบชีต คอลัมน์ และโฟลเดอร์ในระบบทั้งหมด">
+                  <i class="fas fa-database me-1.5 text-primary"></i> ตรวจสอบโครงสร้างฐานข้อมูล
+                </button>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary-glass px-4">
+                  <i class="fas fa-save me-1"></i> บันทึกการตั้งค่า
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -6196,8 +6216,18 @@ async function handleSaveSettings(e) {
   };
 
   showLoading('กำลังบันทึกการตั้งค่า...');
-  await runGAS('apiSaveSettings', data);
+  const res = await runGAS('apiSaveSettings', data);
   hideLoading();
+
+  if (res && res.success === false) {
+    Swal.fire({
+      icon: 'error',
+      title: 'บันทึกการตั้งค่าไม่สำเร็จ',
+      text: res.message || 'เกิดข้อผิดพลาดในการบันทึก',
+      customClass: { popup: 'swal2-glass' }
+    });
+    return;
+  }
 
   Swal.fire({
     icon: 'success',
@@ -6206,6 +6236,52 @@ async function handleSaveSettings(e) {
     showConfirmButton: false,
     customClass: { popup: 'swal2-glass' }
   });
+}
+
+/**
+ * ตรวจสอบและปรับปรุงโครงสร้างฐานข้อมูล (Phase 2)
+ */
+async function verifyDatabaseStructure() {
+  const result = await Swal.fire({
+    title: 'ตรวจสอบโครงสร้างฐานข้อมูล?',
+    text: 'ระบบจะตรวจสอบชีตและคอลัมน์ทั้งหมดของตารางในระบบ รวมถึงการตั้งค่าโฟลเดอร์ใน Drive หากมีคอลัมน์ใหม่ที่ขาดหายไประบบจะเพิ่มให้อัตโนมัติ',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'เริ่มตรวจสอบ',
+    cancelButtonText: 'ยกเลิก',
+    customClass: { popup: 'swal2-glass' }
+  });
+
+  if (!result.isConfirmed) return;
+
+  showLoading('กำลังตรวจสอบและปรับปรุงโครงสร้างฐานข้อมูล...');
+  try {
+    const res = await runGAS('apiVerifyDatabaseStructure');
+    hideLoading();
+    if (res && res.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'สำเร็จ',
+        text: res.message || 'โครงสร้างฐานข้อมูลสมบูรณ์เรียบร้อยแล้ว',
+        customClass: { popup: 'swal2-glass' }
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: res ? res.message : 'ไม่สามารถตรวจสอบฐานข้อมูลได้',
+        customClass: { popup: 'swal2-glass' }
+      });
+    }
+  } catch (err) {
+    hideLoading();
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: err.message,
+      customClass: { popup: 'swal2-glass' }
+    });
+  }
 }
 
 /**
@@ -6762,8 +6838,27 @@ const PROTECTED_METHODS = [
   'apiTestTelegram',
   'apiTestLine',
   'apiScanVehicleImages',
-  'apiGetSensitiveSetting'
+  'apiGetSensitiveSetting',
+  'apiVerifyDatabaseStructure'
 ];
+
+/**
+ * Phase 2 Utility: Escaping strings for safe HTML text and attribute insertion
+ * ป้องกัน XSS, HTML Injection และเครื่องหมายคำพูดทำให้เกิด SyntaxError
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
 
 /**
  * จัดการกรณี Session ฝั่งเซิร์ฟเวอร์หมดอายุ (จำกัดเวลา 6 ชั่วโมง)
@@ -6813,7 +6908,8 @@ function runGAS(funcName, ...args) {
         })
         .withFailureHandler(error => {
           console.error(`GAS Error in ${funcName}:`, error);
-          reject(error);
+          const msg = (error && error.message) ? error.message : String(error);
+          resolve({ success: false, message: msg });
         })[funcName](...args);
       return;
     }
@@ -7598,20 +7694,20 @@ function renderDailyScheduleContent(dateStr) {
               </button>
             </div>
             <h6 class="fw-bold text-dark mb-1">
-              <i class="fas fa-map-marker-alt text-danger me-1"></i>${props.destination || ev.title}
+              <i class="fas fa-map-marker-alt text-danger me-1"></i>${escapeHtml(props.destination || ev.title)}
             </h6>
             <div class="text-muted small mb-2">
-              <i class="fas fa-bullseye text-secondary me-1"></i>${props.purpose || '-'}
+              <i class="fas fa-bullseye text-secondary me-1"></i>${escapeHtml(props.purpose || '-')}
             </div>
             <div class="row g-2 pt-1 border-top small text-secondary">
               <div class="col-sm-6">
-                <i class="fas fa-user text-primary me-1"></i>ผู้ขอ: <span class="text-dark fw-semibold">${props.requester || '-'}</span> (${props.department || '-'})
+                <i class="fas fa-user text-primary me-1"></i>ผู้ขอ: <span class="text-dark fw-semibold">${escapeHtml(props.requester || '-')}</span> (${escapeHtml(props.department || '-')})
               </div>
               <div class="col-sm-6">
-                <i class="fas fa-car text-success me-1"></i>รถ: <span class="text-dark fw-semibold">${vehText}</span>
+                <i class="fas fa-car text-success me-1"></i>รถ: <span class="text-dark fw-semibold">${escapeHtml(vehText)}</span>
               </div>
               <div class="col-sm-6">
-                <i class="fas fa-id-card text-info me-1"></i>คนขับ: <span class="text-dark fw-semibold">${drvText}</span>
+                <i class="fas fa-id-card text-info me-1"></i>คนขับ: <span class="text-dark fw-semibold">${escapeHtml(drvText)}</span>
               </div>
               <div class="col-sm-6">
                 <i class="fas fa-users text-warning me-1"></i>ผู้โดยสาร: <span class="text-dark fw-semibold">${props.passengers || 1} คน</span>
