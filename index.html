@@ -3961,9 +3961,8 @@ function renderSpecialDriversCards(list) {
               </div>
               <!-- Driver Details -->
               <div class="flex-grow-1 min-w-0">
-                <div class="d-flex align-items-center justify-content-between gap-1">
-                  <span class="fw-bold text-dark text-truncate" style="font-size: 0.92rem; line-height: 1.3;" title="${d.FullName}">${d.FullName}</span>
-                  <span class="badge bg-info-subtle text-info border border-info border-opacity-25 flex-shrink-0" style="font-size: 0.68rem;">คนขับพิเศษ</span>
+                <div>
+                  <span class="fw-bold text-dark text-truncate d-block" style="font-size: 0.92rem; line-height: 1.3;" title="${d.FullName}">${d.FullName}</span>
                 </div>
                 <div class="text-muted text-truncate mt-0.5" style="font-size: 0.78rem;">
                   <i class="fas fa-phone-alt me-1 text-primary opacity-75"></i>${d.Phone || '-'} <span class="mx-1 text-black-50">|</span> <i class="fas fa-id-card me-1 text-secondary opacity-75"></i>${d.LicenseType || 'ตามภารกิจ'}
@@ -4017,7 +4016,7 @@ function filterSpecialStaffList(query) {
       <a href="javascript:void(0)" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3 border-bottom ${!isAvail ? 'disabled opacity-50 bg-light' : ''}" onclick='selectSpecialDriverFromSearch(${JSON.stringify(d)})'>
         <div>
           <div class="fw-bold text-dark"><i class="fas fa-user-tag text-info me-2"></i>${d.FullName}</div>
-          <small class="text-muted ms-4">โทร: ${d.Phone || '-'} | ${d.LicenseType || 'คนขับพิเศษ'}</small>
+          <small class="text-muted ms-4">โทร: ${d.Phone || '-'} | ${d.LicenseType || 'ตามภารกิจ'}</small>
         </div>
         <div>
           ${isAvail 
