@@ -4811,9 +4811,19 @@ async function handleEndTripSubmit(e) {
               <h6 class="fw-bold text-primary mb-3">3. ตั้งค่าการแจ้งเตือน Telegram Bot ตามบทบาท (Role-based)</h6>
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label small fw-semibold">Telegram Bot Token <span class="text-danger">*</span></label>
-                  <input type="password" class="form-control" id="settingTelegramToken" placeholder="เช่น 123456789:ABCDefgh...">
-                  <small class="text-muted" style="font-size: 0.75rem;">Token บอทกลางสำหรับส่งข้อความแจ้งเตือน (ใช้ร่วมกันทุกบทบาท)</small>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label small fw-semibold mb-0">Telegram Bot Token <span class="text-danger">*</span></label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="btnRevealTelegramToken" style="font-size: 0.72rem; border-radius: 6px;" onclick="toggleRevealToken('Telegram_Bot_Token')">
+                      <i class="fas fa-eye me-1"></i>แสดง/แก้ไข Token
+                    </button>
+                  </div>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="settingTelegramToken" placeholder="เช่น 123456789:ABCDefgh..." readonly style="background-color: #f8fafc;">
+                    <button class="btn btn-outline-secondary" type="button" id="btnToggleMaskTelegram" onclick="togglePasswordVisibility('settingTelegramToken', this)" title="เปิด/ปิดการแสดงผล">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted" style="font-size: 0.75rem;">Token บอทกลางสำหรับส่งข้อความแจ้งเตือน (ซ่อนเพื่อความปลอดภัย กดปุ่ม "แสดง/แก้ไข Token" เมื่อต้องการตรวจสอบหรือเปลี่ยน Token)</small>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-between align-items-center mb-1">
@@ -4912,9 +4922,19 @@ async function handleEndTripSubmit(e) {
 
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label small fw-semibold">LINE Channel Access Token (Long-lived) <span class="text-danger">*</span></label>
-                  <input type="password" class="form-control" id="settingLineChannelAccessToken" placeholder="เช่น eyJhbGciOiJIUzI1NiJ9...">
-                  <small class="text-muted" style="font-size: 0.75rem;">คัดลอกจาก LINE Developers Console &gt; Messaging API &gt; Channel access token</small>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label small fw-semibold mb-0">LINE Channel Access Token (Long-lived) <span class="text-danger">*</span></label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="btnRevealLineToken" style="font-size: 0.72rem; border-radius: 6px;" onclick="toggleRevealToken('Line_Channel_Access_Token')">
+                      <i class="fas fa-eye me-1"></i>แสดง/แก้ไข Token
+                    </button>
+                  </div>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="settingLineChannelAccessToken" placeholder="เช่น eyJhbGciOiJIUzI1NiJ9..." readonly style="background-color: #f8fafc;">
+                    <button class="btn btn-outline-secondary" type="button" id="btnToggleMaskLine" onclick="togglePasswordVisibility('settingLineChannelAccessToken', this)" title="เปิด/ปิดการแสดงผล">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted" style="font-size: 0.75rem;">คัดลอกจาก LINE Developers Console &gt; Messaging API &gt; Channel access token (ซ่อนเพื่อความปลอดภัย กดปุ่ม "แสดง/แก้ไข Token" เมื่อต้องการตรวจสอบหรือเปลี่ยน Token)</small>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-between align-items-center mb-1">
@@ -5246,6 +5266,15 @@ async function loadManagementData() {
     hideLoading();
 
     if (!data) return;
+    if (data.success === false) {
+      Swal.fire({
+        icon: 'error',
+        title: 'ไม่สามารถโหลดข้อมูลได้',
+        text: data.message || 'ไม่มีสิทธิ์เข้าถึงข้อมูลการจัดการระบบ',
+        customClass: { popup: 'swal2-glass' }
+      });
+      return;
+    }
     cachedMgmtData = data;
 
     // เรนเดอร์แท็บยานพาหนะทั้งแบบการ์ดและตาราง
@@ -5599,6 +5628,91 @@ function renderUsersTable(users) {
   tbody.innerHTML = html;
 }
 
+let isTelegramTokenRevealed = false;
+let isLineTokenRevealed = false;
+
+function resetTokenButtonsState() {
+  isTelegramTokenRevealed = false;
+  isLineTokenRevealed = false;
+  const btnTg = document.getElementById('btnRevealTelegramToken');
+  if (btnTg) {
+    btnTg.innerHTML = '<i class="fas fa-eye me-1"></i>แสดง/แก้ไข Token';
+    btnTg.className = 'btn btn-sm btn-outline-secondary py-0 px-2';
+  }
+  const btnLine = document.getElementById('btnRevealLineToken');
+  if (btnLine) {
+    btnLine.innerHTML = '<i class="fas fa-eye me-1"></i>แสดง/แก้ไข Token';
+    btnLine.className = 'btn btn-sm btn-outline-secondary py-0 px-2';
+  }
+  const btnMaskTg = document.getElementById('btnToggleMaskTelegram');
+  if (btnMaskTg) btnMaskTg.innerHTML = '<i class="fas fa-eye"></i>';
+  const btnMaskLine = document.getElementById('btnToggleMaskLine');
+  if (btnMaskLine) btnMaskLine.innerHTML = '<i class="fas fa-eye"></i>';
+}
+
+function togglePasswordVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btnEl.innerHTML = '<i class="fas fa-eye-slash"></i>';
+  } else {
+    input.type = 'password';
+    btnEl.innerHTML = '<i class="fas fa-eye"></i>';
+  }
+}
+
+async function toggleRevealToken(tokenType) {
+  const isTelegram = tokenType === 'Telegram_Bot_Token';
+  const inputEl = document.getElementById(isTelegram ? 'settingTelegramToken' : 'settingLineChannelAccessToken');
+  const btnEl = document.getElementById(isTelegram ? 'btnRevealTelegramToken' : 'btnRevealLineToken');
+  const isRevealed = isTelegram ? isTelegramTokenRevealed : isLineTokenRevealed;
+
+  if (isRevealed) {
+    // ล็อกกลับและซ่อน
+    inputEl.readOnly = true;
+    inputEl.style.backgroundColor = '#f8fafc';
+    inputEl.type = 'password';
+    btnEl.innerHTML = '<i class="fas fa-eye me-1"></i>แสดง/แก้ไข Token';
+    btnEl.className = 'btn btn-sm btn-outline-secondary py-0 px-2';
+    if (isTelegram) isTelegramTokenRevealed = false;
+    else isLineTokenRevealed = false;
+    return;
+  }
+
+  showLoading('กำลังดึงข้อมูล Token จากเซิร์ฟเวอร์...');
+  try {
+    const res = await runGAS('apiGetSensitiveSetting', tokenType);
+    hideLoading();
+    if (res && res.success) {
+      inputEl.value = res.value || '';
+      inputEl.readOnly = false;
+      inputEl.style.backgroundColor = '#ffffff';
+      inputEl.type = 'text';
+      btnEl.innerHTML = '<i class="fas fa-lock me-1"></i>ล็อก Token';
+      btnEl.className = 'btn btn-sm btn-warning py-0 px-2';
+      if (isTelegram) isTelegramTokenRevealed = true;
+      else isLineTokenRevealed = true;
+      inputEl.focus();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'ไม่สามารถดึงข้อมูลได้',
+        text: res ? res.message : 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์',
+        customClass: { popup: 'swal2-glass' }
+      });
+    }
+  } catch (err) {
+    hideLoading();
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: err.message,
+      customClass: { popup: 'swal2-glass' }
+    });
+  }
+}
+
 function renderSettingsForm(s) {
   document.getElementById('settingRequireHead').checked = String(s.Require_Head_Approval).toUpperCase() === 'TRUE';
   document.getElementById('settingRequireDeputy').checked = String(s.Require_Deputy_Approval).toUpperCase() === 'TRUE';
@@ -5607,7 +5721,14 @@ function renderSettingsForm(s) {
   document.getElementById('settingBookingPrefix').value = s.Booking_Prefix || 'BK';
   updateBookingPrefixPreview();
   document.getElementById('settingDriveFolder').value = s.Drive_Folder_ID || '';
-  document.getElementById('settingTelegramToken').value = s.Telegram_Bot_Token || '';
+
+  // Telegram Token
+  const tgTokenEl = document.getElementById('settingTelegramToken');
+  tgTokenEl.value = s.Telegram_Bot_Token || '';
+  tgTokenEl.readOnly = true;
+  tgTokenEl.style.backgroundColor = '#f8fafc';
+  tgTokenEl.type = 'password';
+
   document.getElementById('settingTelegramHeadChatId').value = s.Telegram_Head_Chat_ID || '';
   document.getElementById('settingTelegramDeputyChatId').value = s.Telegram_Deputy_Chat_ID || '';
   document.getElementById('settingTelegramDirectorChatId').value = s.Telegram_Director_Chat_ID || '';
@@ -5615,12 +5736,19 @@ function renderSettingsForm(s) {
   document.getElementById('settingTelegramDriverChatId').value = s.Telegram_Driver_Chat_ID || '';
 
   // LINE Messaging API Settings
-  document.getElementById('settingLineChannelAccessToken').value = s.Line_Channel_Access_Token || '';
+  const lineTokenEl = document.getElementById('settingLineChannelAccessToken');
+  lineTokenEl.value = s.Line_Channel_Access_Token || '';
+  lineTokenEl.readOnly = true;
+  lineTokenEl.style.backgroundColor = '#f8fafc';
+  lineTokenEl.type = 'password';
+
   document.getElementById('settingLineHeadUserId').value = s.Line_Head_User_ID || '';
   document.getElementById('settingLineDeputyUserId').value = s.Line_Deputy_User_ID || '';
   document.getElementById('settingLineDirectorUserId').value = s.Line_Director_User_ID || '';
   document.getElementById('settingLineCentralId').value = s.Line_Central_ID || '';
   document.getElementById('settingLineDriverId').value = s.Line_Driver_ID || '';
+
+  resetTokenButtonsState();
 
   // ตั้งค่า Webhook URL ให้ตรงกับหน้าปัจจุบันอัตโนมัติ
   const webhookDisplay = document.getElementById('lineWebhookUrlDisplay');
@@ -6621,15 +6749,68 @@ document.addEventListener('DOMContentLoaded', () => {
 const DEFAULT_GAS_API_URL = "https://script.google.com/macros/s/AKfycbxpJr5olwSnxkYQm8LJMZoEL2YAuZYbu1R2p9QFpkScO4IqxIcTC2KoQEovxgA7_Lh4Iw/exec";
 const GAS_API_URL = (typeof window !== 'undefined' && window.GAS_API_URL) ? window.GAS_API_URL : DEFAULT_GAS_API_URL;
 
+// รายชื่อฟังก์ชันหลังบ้านที่ต้องการตรวจสอบ Session ของ Admin หรือผู้ได้รับอนุญาต
+const PROTECTED_METHODS = [
+  'apiGetManagementData',
+  'apiSaveVehicle',
+  'apiDeleteVehicle',
+  'apiSaveDriver',
+  'apiDeleteDriver',
+  'apiSaveUser',
+  'apiDeleteUser',
+  'apiSaveSettings',
+  'apiTestTelegram',
+  'apiTestLine',
+  'apiScanVehicleImages',
+  'apiGetSensitiveSetting'
+];
+
+/**
+ * จัดการกรณี Session ฝั่งเซิร์ฟเวอร์หมดอายุ (จำกัดเวลา 6 ชั่วโมง)
+ */
+function handleSessionExpired() {
+  if (currentUser) {
+    currentUser = null;
+    sessionStorage.removeItem('gov_car_user');
+    updateAuthUI();
+    Swal.fire({
+      icon: 'warning',
+      title: 'เซสชันหมดอายุ',
+      text: 'เซสชันของคุณหมดอายุแล้ว (จำกัดเวลา 6 ชั่วโมง) กรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อความปลอดภัย',
+      customClass: { popup: 'swal2-glass' }
+    });
+    navigateTo('dashboard');
+  }
+}
+
 /**
  * Promise wrapper สำหรับเรียก Backend (รองรับทั้ง google.script.run และ fetch API บน GitHub Pages)
  */
 function runGAS(funcName, ...args) {
+  const token = (currentUser && currentUser.token) ? currentUser.token : '';
+
+  // สำหรับฟังก์ชันจัดการระบบ หากผู้ใช้ล็อกอินอยู่และยังไม่ได้ส่ง token ไป ให้แนบ token ต่อท้าย args
+  if (PROTECTED_METHODS.includes(funcName)) {
+    const lastArg = args[args.length - 1];
+    const hasSessionArg = lastArg && (
+      (typeof lastArg === 'string' && lastArg.startsWith('SES-')) ||
+      (typeof lastArg === 'object' && (lastArg.token || lastArg.role))
+    );
+    if (!hasSessionArg && token) {
+      args.push(token);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     // 1. หากรันอยู่บน Google Apps Script Web App เดิม
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
-        .withSuccessHandler(response => resolve(response))
+        .withSuccessHandler(response => {
+          if (response && response.sessionExpired) {
+            handleSessionExpired();
+          }
+          resolve(response);
+        })
         .withFailureHandler(error => {
           console.error(`GAS Error in ${funcName}:`, error);
           reject(error);
@@ -6640,7 +6821,8 @@ function runGAS(funcName, ...args) {
     // 2. หากรันอยู่บน GitHub Pages หรือภายนอก (เรียกผ่าน fetch API แบบ Simple Request)
     const payload = {
       action: funcName,
-      args: args
+      args: args,
+      token: token
     };
 
     fetch(GAS_API_URL, {
@@ -6657,6 +6839,9 @@ function runGAS(funcName, ...args) {
       return res.json();
     })
     .then(data => {
+      if (data && data.sessionExpired) {
+        handleSessionExpired();
+      }
       resolve(data);
     })
     .catch(err => {
@@ -6942,8 +7127,14 @@ function handleLogout() {
     confirmButtonText: 'ออกจากระบบ',
     cancelButtonText: 'ยกเลิก',
     customClass: { popup: 'swal2-glass' }
-  }).then(result => {
+  }).then(async result => {
     if (result.isConfirmed) {
+      const token = currentUser ? currentUser.token : '';
+      if (token) {
+        try {
+          await runGAS('apiLogout', token);
+        } catch (e) {}
+      }
       currentUser = null;
       sessionStorage.removeItem('gov_car_user');
       updateAuthUI();
@@ -6989,7 +7180,7 @@ async function confirmDeleteBooking(bookingId) {
   if (result.isConfirmed) {
     showLoading('กำลังลบคำขอ...');
     try {
-      const res = await runGAS('apiDeleteBooking', bookingId, currentUser.role);
+      const res = await runGAS('apiDeleteBooking', bookingId, currentUser);
       hideLoading();
       if (res && res.success) {
         Swal.fire({
