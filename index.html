@@ -6578,6 +6578,10 @@ let selectedDailyDate = null;
 let isDashboardDataLoading = false;
 let dashboardLoadingPromise = null;
 
+// กำหนดการเปิด/ปิดระบบ คอนโซลพนักงานขับรถ (Driver Console)
+// ปัจจุบันตั้งค่าเป็น false เพื่อซ่อนการแสดงผลตามความต้องการของผู้ใช้งาน แต่ยังคงไฟล์ โค้ด และระบบทั้งหมดไว้อย่างสมบูรณ์
+const ENABLE_DRIVER_CONSOLE = false;
+
 // กู้คืนข้อมูลแคช Dashboard ทันทีตั้งแต่โหลดสคริปต์ (Instant Cache Restore 0ms)
 try {
   const _savedDashboardCache = localStorage.getItem('vbs_dashboard_cache');
@@ -6680,6 +6684,11 @@ function closeOffcanvasMenu() {
 }
 
 function navigateTo(viewName) {
+  // หากพยายามเข้าหน้า driver แต่ปิดการใช้งานไว้ชั่วคราว ให้เปลี่ยนไปที่ dashboard
+  if (viewName === 'driver' && typeof ENABLE_DRIVER_CONSOLE !== 'undefined' && !ENABLE_DRIVER_CONSOLE) {
+    viewName = 'dashboard';
+  }
+
   // ปิดเมนู Offcanvas หากเปิดอยู่
   closeOffcanvasMenu();
 
@@ -6784,8 +6793,8 @@ function updateAuthUI() {
     const canApprove = ['Head', 'Deputy', 'Director', 'Admin'].includes(currentUser.role);
     approvalNavs.forEach(el => el.style.display = canApprove ? 'flex' : 'none');
 
-    // สิทธิ์เมนูคนขับ (Driver, Admin)
-    const canDrive = ['Driver', 'Admin'].includes(currentUser.role);
+    // สิทธิ์เมนูคนขับ (Driver, Admin) - ซ่อนไว้ชั่วคราวตามความต้องการของผู้ใช้ แต่โครงสร้างระบบยังคงอยู่ครบถ้วน
+    const canDrive = (typeof ENABLE_DRIVER_CONSOLE !== 'undefined' && ENABLE_DRIVER_CONSOLE) && ['Driver', 'Admin'].includes(currentUser.role);
     driverNavs.forEach(el => el.style.display = canDrive ? 'flex' : 'none');
 
     // สิทธิ์เมนูจัดการระบบ (Admin เท่านั้น)
@@ -6894,7 +6903,11 @@ async function handleLoginSubmit(event) {
 
       // นำทางตามบทบาท
       if (currentUser.role === 'Driver') {
-        navigateTo('driver');
+        if (typeof ENABLE_DRIVER_CONSOLE !== 'undefined' && ENABLE_DRIVER_CONSOLE) {
+          navigateTo('driver');
+        } else {
+          navigateTo('dashboard');
+        }
       } else if (['Head', 'Deputy', 'Director'].includes(currentUser.role)) {
         navigateTo('approval');
       } else {
