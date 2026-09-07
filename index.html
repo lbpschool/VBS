@@ -3513,18 +3513,12 @@ function renderApprovalQueues(bookings) {
       // 1.2 เรนเดอร์ Mobile Card
       cardsHtml += `
         <div class="approval-mobile-card mb-3 p-3 rounded-4 border shadow-sm">
-          <!-- การ์ด 1: รหัสคำขอ & ขั้นตอนปัจจุบัน -->
-          <div class="approval-mobile-subcard justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2 min-w-0">
-              <span class="subcard-icon text-primary"><i class="fas fa-file-signature"></i></span>
-              <div class="min-w-0">
-                <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
-                <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
-              </div>
-            </div>
-            <div class="text-end flex-shrink-0">
-              <div class="text-muted mb-0.5" style="font-size: 0.75rem;">ขั้นตอนปัจจุบัน</div>
-              <div>${stageBadge}</div>
+          <!-- การ์ด 1: รหัสคำขอ -->
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-primary"><i class="fas fa-file-signature"></i></span>
+            <div class="min-w-0">
+              <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
+              <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
             </div>
           </div>
 
@@ -3550,8 +3544,8 @@ function renderApprovalQueues(bookings) {
             <div class="min-w-0 flex-grow-1">
               <div class="text-muted" style="font-size: 0.75rem;">ปลายทาง / วัตถุประสงค์</div>
               <div class="fw-semibold text-dark fs-6">${b.Destination} ${b.Province ? `<span class="text-muted fw-normal small">(${b.Province})</span>` : ''}</div>
-              <div class="small text-secondary mt-0.5">
-                <span class="fw-medium text-dark">วัตถุประสงค์:</span> ${b.Purpose || '-'}
+              <div class="mt-1" style="font-size: 0.95rem;">
+                <span class="fw-bold text-dark">วัตถุประสงค์:</span> <span class="fw-bold text-dark">${b.Purpose || '-'}</span>
               </div>
               ${assignedInfo ? `<div class="mt-1.5 pt-1.5 border-top">${assignedInfo}</div>` : ''}
             </div>
@@ -3641,20 +3635,12 @@ function renderApprovalQueues(bookings) {
       // 2.2 เรนเดอร์ Mobile Card
       assignCardsHtml += `
         <div class="assignment-mobile-card mb-3 p-3 rounded-4 border shadow-sm">
-          <!-- การ์ด 1: รหัสคำขอ & สถานะ -->
-          <div class="approval-mobile-subcard justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2 min-w-0">
-              <span class="subcard-icon text-success"><i class="fas fa-car-side"></i></span>
-              <div class="min-w-0">
-                <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
-                <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
-              </div>
-            </div>
-            <div class="text-end flex-shrink-0">
-              <div class="text-muted mb-0.5" style="font-size: 0.75rem;">ขั้นตอนปัจจุบัน</div>
-              <span class="badge bg-warning text-dark px-2.5 py-1 rounded-pill shadow-xs">
-                <i class="fas fa-hourglass-half me-1"></i>รอจัดสรร
-              </span>
+          <!-- การ์ด 1: รหัสคำขอ -->
+          <div class="approval-mobile-subcard">
+            <span class="subcard-icon text-success"><i class="fas fa-car-side"></i></span>
+            <div class="min-w-0">
+              <div class="text-muted" style="font-size: 0.75rem;">รหัสคำขอ</div>
+              <div class="fw-bold text-primary fs-6 text-truncate">${b.BookingID}</div>
             </div>
           </div>
 
