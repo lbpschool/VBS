@@ -2113,7 +2113,7 @@
             <h5 class="fw-bold mb-0 text-dark">
               <i class="fas fa-calendar-alt me-2 text-primary"></i>ปฏิทินการใช้ยานพาหนะ
             </h5>
-            <small class="text-muted">คลิกที่รายการเพื่อดูรายละเอียดภารกิจ</small>
+            <small class="text-muted">คลิกที่วันที่หรือรายการภารกิจเพื่อดูตารางการใช้รถประจำวัน</small>
           </div>
           <!-- Legend Badges -->
           <div class="d-flex flex-wrap gap-2 mt-2 mt-sm-0">
@@ -7608,10 +7608,27 @@ function renderFullCalendar(events) {
       hour12: false
     },
     eventClick: function(info) {
-      showEventDetailModal(info.event.extendedProps.bookingId);
+      // ยกเลิกการเปิด Modal รายละเอียดคำขอเดี่ยว (รูปที่ 1) ในปฏิทิน
+      // ให้เปิด Modal ตารางการใช้รถประจำวัน (รูปที่ 2) เสมอ ทั้งการคลิกที่วันหรือคลิกที่รายการภารกิจ
+      let dateStr = '';
+      if (info.event.startStr) {
+        dateStr = info.event.startStr.split('T')[0];
+      } else if (info.event.start) {
+        const d = info.event.start;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dateStr = `${year}-${month}-${day}`;
+      }
+      if (dateStr) {
+        openDailyScheduleModal(dateStr);
+      }
     },
     dateClick: function(info) {
-      openDailyScheduleModal(info.dateStr);
+      const dateStr = info.dateStr ? info.dateStr.split('T')[0] : '';
+      if (dateStr) {
+        openDailyScheduleModal(dateStr);
+      }
     }
   });
 
@@ -7818,14 +7835,12 @@ function renderDailyScheduleContent(dateStr) {
 
         bHtml += `
           <div class="daily-booking-card ${statusClass}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
               <div>
                 <span class="badge bg-light text-dark border me-1"><i class="far fa-clock text-primary me-1"></i>${timeRangeText}</span>
                 ${statusBadge}
               </div>
-              <button class="btn btn-sm btn-light-glass py-1 px-2.5" onclick="viewBookingDetail('${props.bookingId}')" title="ดูรายละเอียดคำขอ">
-                <i class="fas fa-eye me-1"></i><span class="small">รายละเอียด</span>
-              </button>
+              <span class="badge bg-light text-primary border small fw-semibold">${escapeHtml(props.bookingId || '')}</span>
             </div>
             <h6 class="fw-bold text-dark mb-1">
               <i class="fas fa-map-marker-alt text-danger me-1"></i>${escapeHtml(props.destination || ev.title)}
