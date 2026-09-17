@@ -2916,21 +2916,76 @@ let cachedBookings = [];
 let currentFilteredTrackingBookings = [];
 let trackingCurrentPage = 1;
 const TRACKING_PAGE_SIZE = 15;
+let firebaseBookingsListenerAttached = false;
+
+function setupFirebaseBookingsListener() {
+  if (firebaseBookingsListenerAttached || !window.firebaseDb) return;
+  try {
+    window.firebaseDb.ref('vbs/bookings').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data && typeof data === 'object') {
+        const bookingsArr = Object.values(data).sort((a, b) => {
+          return (b.BookingID || '').localeCompare(a.BookingID || '');
+        });
+        cachedBookings = bookingsArr;
+        if (typeof filterTrackingTable === 'function') {
+          filterTrackingTable();
+        } else {
+          currentFilteredTrackingBookings = cachedBookings;
+          renderTrackingTable(currentFilteredTrackingBookings);
+        }
+      }
+    }, (err) => {
+      console.warn('Firebase bookings listener warning:', err);
+    });
+    firebaseBookingsListenerAttached = true;
+  } catch (e) {
+    console.warn('Cannot attach Firebase bookings listener:', e);
+  }
+}
 
 async function loadTrackingBookings() {
   const tbody = document.getElementById('trackingTableBody');
   const paginationContainer = document.getElementById('trackingPaginationContainer');
   if (paginationContainer) paginationContainer.style.setProperty('display', 'none', 'important');
-  tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลดข้อมูลล่าสุด...</td></tr>';
 
-  try {
-    const bookings = await runGAS('apiSearchBookings', '', 'ALL');
-    cachedBookings = bookings || [];
-    currentFilteredTrackingBookings = cachedBookings;
-    trackingCurrentPage = 1;
-    renderTrackingTable(currentFilteredTrackingBookings);
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">เกิดข้อผิดพลาดในการโหลด: ${err.message}</td></tr>`;
+  // 1. ดึงข้อมูลจาก Firebase Realtime Database ก่อน (<50ms)
+  let loadedFromFirebase = false;
+  if (window.firebaseDb) {
+    try {
+      const snap = await Promise.race([
+        window.firebaseDb.ref('vbs/bookings').once('value'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 1800))
+      ]);
+      const data = snap.val();
+      if (data && typeof data === 'object') {
+        const bookingsArr = Object.values(data).sort((a, b) => {
+          return (b.BookingID || '').localeCompare(a.BookingID || '');
+        });
+        cachedBookings = bookingsArr;
+        currentFilteredTrackingBookings = cachedBookings;
+        trackingCurrentPage = 1;
+        renderTrackingTable(currentFilteredTrackingBookings);
+        loadedFromFirebase = true;
+        setupFirebaseBookingsListener();
+      }
+    } catch (fbErr) {
+      console.warn('Firebase RTDB read skipped or timeout, fallback to GAS:', fbErr.message);
+    }
+  }
+
+  // 2. หากยังไม่ได้ข้อมูลจาก Firebase หรือ Firebase ขัดข้อง ให้ใช้ GAS Backend (Fallback)
+  if (!loadedFromFirebase) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลดข้อมูลล่าสุด...</td></tr>';
+    try {
+      const bookings = await runGAS('apiSearchBookings', '', 'ALL');
+      cachedBookings = bookings || [];
+      currentFilteredTrackingBookings = cachedBookings;
+      trackingCurrentPage = 1;
+      renderTrackingTable(currentFilteredTrackingBookings);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">เกิดข้อผิดพลาดในการโหลด: ${err.message}</td></tr>`;
+    }
   }
 }
 
@@ -5106,9 +5161,12 @@ async function handleEndTripSubmit(e) {
             </div>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
-              <div>
+              <div class="d-flex flex-wrap gap-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" onclick="verifyDatabaseStructure()" id="btnVerifyDb" style="border-radius: 8px; font-size: 0.82rem;" title="ตรวจสอบชีต คอลัมน์ และโฟลเดอร์ในระบบทั้งหมด">
                   <i class="fas fa-database me-1.5 text-primary"></i> ตรวจสอบโครงสร้างฐานข้อมูล
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-warning px-3 py-1.5" onclick="syncAllToFirebaseFromAdmin()" id="btnSyncFirebase" style="border-radius: 8px; font-size: 0.82rem;" title="ซิงค์ข้อมูลทั้งหมดจาก Google Sheets ไปยัง Firebase Realtime Database">
+                  <i class="fas fa-bolt me-1.5 text-warning"></i> ซิงค์ข้อมูลทั้งหมดไปยัง Firebase
                 </button>
               </div>
               <div class="d-flex gap-2">
@@ -6378,6 +6436,61 @@ async function verifyDatabaseStructure() {
 }
 
 /**
+ * ซิงค์ข้อมูลทั้งหมดจาก Google Sheets ไปยัง Firebase Realtime Database
+ */
+async function syncAllToFirebaseFromAdmin() {
+  const result = await Swal.fire({
+    title: '⚡ ซิงค์ข้อมูลทั้งหมดไปยัง Firebase?',
+    html: 'ระบบจะนำข้อมูลคำขอทั้งหมด, รายชื่อบุคลากร, จังหวัด และสถิติปฏิทินจาก Google Sheets ขึ้นสู่ Firebase Realtime Database เพื่อให้ระบบทำงานได้เร็วระดับเสี้ยววินาที (&lt;50ms)',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '<i class="fas fa-bolt me-1"></i> เริ่มซิงค์ข้อมูล',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#f59e0b',
+    customClass: { popup: 'swal2-glass' }
+  });
+
+  if (!result.isConfirmed) return;
+
+  showLoading('กำลังซิงค์ข้อมูลทั้งหมดไปยัง Firebase Realtime Database...');
+  try {
+    const res = await runGAS('apiSyncAllToFirebase');
+    hideLoading();
+    if (res && res.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'ซิงค์ข้อมูลสำเร็จ!',
+        html: `
+          <div class="text-start small p-2.5 rounded bg-light border">
+            <div><i class="fas fa-check text-success me-1.5"></i>คำขอใช้รถ: <b>${res.totalBookings || 0}</b> รายการ</div>
+            <div><i class="fas fa-check text-success me-1.5"></i>รายชื่อบุคลากร: <b>${res.totalStaff || 0}</b> ท่าน</div>
+            <div><i class="fas fa-check text-success me-1.5"></i>จังหวัด: <b>${res.totalProvinces || 0}</b> จังหวัด</div>
+            <div><i class="fas fa-check text-success me-1.5"></i>สถิติ Dashboard และปฏิทินอัปเดตเรียบร้อย</div>
+          </div>
+        `,
+        customClass: { popup: 'swal2-glass' }
+      });
+      if (typeof loadDashboardData === 'function') loadDashboardData(true);
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'ซิงค์ข้อมูลไม่สำเร็จ',
+        text: res ? res.message : 'เกิดข้อผิดพลาดในการซิงค์',
+        customClass: { popup: 'swal2-glass' }
+      });
+    }
+  } catch (err) {
+    hideLoading();
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: err.message,
+      customClass: { popup: 'swal2-glass' }
+    });
+  }
+}
+
+/**
  * คัดลอก Webhook URL สำหรับนำไปใส่ใน LINE Developers Console
  */
 function copyWebhookUrl() {
@@ -6850,6 +6963,22 @@ async function printBooking(bookingId) {
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
+  <!-- Firebase App & Realtime Database SDK (Compat for seamless browser integration) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    window.firebaseConfig = {
+      apiKey: "AIzaSyCQaOknIj-uLNad0s6vxFDQaL8CU1LdaFI",
+      authDomain: "vbs-system.firebaseapp.com",
+      databaseURL: "https://vbs-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "vbs-system",
+      storageBucket: "vbs-system.firebasestorage.app",
+      messagingSenderId: "1029171526000",
+      appId: "1:1029171526000:web:a86c5c124b3ef6053e77b5",
+      measurementId: "G-LYDECK694S"
+    };
+  </script>
+
   <!-- Include Client Scripts -->
   <script>
 /**
@@ -6873,6 +7002,21 @@ let dashboardEvents = [];
 let selectedDailyDate = null;
 let isDashboardDataLoading = false;
 let dashboardLoadingPromise = null;
+
+// Initialize Firebase Realtime Database (ความเร็วสูงระดับ <50ms)
+let firebaseDb = null;
+try {
+  if (typeof firebase !== 'undefined' && window.firebaseConfig) {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(window.firebaseConfig);
+    }
+    firebaseDb = firebase.database();
+    window.firebaseDb = firebaseDb;
+    console.log('⚡ Firebase Realtime Database connected successfully');
+  }
+} catch (fbInitErr) {
+  console.warn('Firebase init skipped or unavailable:', fbInitErr);
+}
 
 // กำหนดการเปิด/ปิดระบบ คอนโซลพนักงานขับรถ (Driver Console)
 // ปัจจุบันตั้งค่าเป็น false เพื่อซ่อนการแสดงผลตามความต้องการของผู้ใช้งาน แต่ยังคงไฟล์ โค้ด และระบบทั้งหมดไว้อย่างสมบูรณ์
@@ -6932,7 +7076,8 @@ const PROTECTED_METHODS = [
   'apiTestLine',
   'apiScanVehicleImages',
   'apiGetSensitiveSetting',
-  'apiVerifyDatabaseStructure'
+  'apiVerifyDatabaseStructure',
+  'apiSyncAllToFirebase'
 ];
 
 /**
@@ -7464,6 +7609,87 @@ async function confirmDeleteBooking(bookingId) {
  * ==============================================================================
  */
 
+let firebaseDashboardListenerAttached = false;
+
+function setupFirebaseDashboardListener() {
+  if (firebaseDashboardListenerAttached || !window.firebaseDb) return;
+  try {
+    window.firebaseDb.ref('vbs/dashboardData').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.success) {
+        console.log('⚡ Firebase Realtime: Auto-syncing dashboard update');
+        applyDashboardData(data);
+      }
+    }, (err) => {
+      console.warn('Firebase dashboard listener warning:', err);
+    });
+    firebaseDashboardListenerAttached = true;
+  } catch (e) {
+    console.warn('Cannot attach Firebase dashboard listener:', e);
+  }
+}
+
+function applyDashboardData(res) {
+  if (!res || !res.success) return;
+
+  const m = res.metrics;
+  // ควบคุมการแสดง KPI Metric Cards ตามบทบาท (Admin, Head, Deputy, Director, Driver เท่านั้น)
+  const kpiCardsContainer = document.getElementById('kpi-cards-container');
+  const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
+  if (kpiCardsContainer) {
+    kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
+  }
+
+  // อัปเดตตัวเลข KPI Cards เฉพาะเมื่อได้รับสิทธิ์แสดงผล
+  if (canViewKpi && m) {
+    animateNumber('kpi-total-bookings', m.totalBookings || 0);
+    animateNumber('kpi-pending-approval', m.pendingApproval || 0);
+    animateNumber('kpi-approved', m.approved || 0);
+    animateNumber('kpi-completed', m.completed || 0);
+    animateNumber('kpi-available-vehicles', m.availableVehicles || 0);
+    animateNumber('kpi-available-drivers', m.availableDrivers || 0);
+  }
+
+  // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
+  dashboardVehicles = res.vehicles || [];
+  dashboardDrivers = res.drivers || [];
+  dashboardEvents = res.calendarEvents || [];
+
+  // บันทึกลง localStorage เพื่อให้การเปิดเว็บครั้งต่อไปแสดงผลได้ทันที 0ms
+  try {
+    localStorage.setItem('vbs_dashboard_cache', JSON.stringify({
+      vehicles: dashboardVehicles,
+      drivers: dashboardDrivers,
+      calendarEvents: dashboardEvents,
+      timestamp: Date.now()
+    }));
+  } catch (e) {}
+
+  // อัปเดตอีเวนต์บน FullCalendar ที่แสดงอยู่แล้วอย่างนุ่มนวล
+  if (currentCalendar) {
+    currentCalendar.removeAllEvents();
+    if (dashboardEvents.length > 0) {
+      currentCalendar.addEventSource(dashboardEvents);
+    }
+    setTimeout(() => {
+      if (currentCalendar) currentCalendar.updateSize();
+    }, 100);
+  } else {
+    renderFullCalendar(dashboardEvents);
+  }
+
+  // เรนเดอร์ Chart.js
+  if (res.charts) {
+    renderCharts(res.charts);
+  }
+
+  // หาก Modal ตารางประจำวันเปิดอยู่ ให้ทำการ re-render ข้อมูลทันที
+  const modalEl = document.getElementById('dailyScheduleModal');
+  if (modalEl && modalEl.classList.contains('show') && selectedDailyDate) {
+    renderDailyScheduleContent(selectedDailyDate);
+  }
+}
+
 async function loadDashboardData(forceRefresh = false) {
   if (isDashboardDataLoading && dashboardLoadingPromise && !forceRefresh) {
     return dashboardLoadingPromise;
@@ -7476,6 +7702,27 @@ async function loadDashboardData(forceRefresh = false) {
 
   dashboardLoadingPromise = (async () => {
     try {
+      // 2. ตรวจสอบข้อมูลจาก Firebase Realtime Database ก่อน (<50ms)
+      let loadedFromFirebase = false;
+      if (window.firebaseDb) {
+        try {
+          setupFirebaseDashboardListener();
+          const snap = await Promise.race([
+            window.firebaseDb.ref('vbs/dashboardData').once('value'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 1800))
+          ]);
+          const fbData = snap.val();
+          if (fbData && fbData.success) {
+            applyDashboardData(fbData);
+            loadedFromFirebase = true;
+            return fbData;
+          }
+        } catch (fbErr) {
+          console.warn('Firebase dashboard read skipped or timeout, fallback to GAS:', fbErr.message);
+        }
+      }
+
+      // 3. หากไม่ได้ข้อมูลจาก Firebase ให้เรียกผ่าน Google Apps Script Backend (Fallback)
       const res = await runGAS('apiGetDashboardStats');
       if (!res || !res.success) {
         console.warn('apiGetDashboardStats returned unsuccessful:', res);
@@ -7486,63 +7733,7 @@ async function loadDashboardData(forceRefresh = false) {
         return res;
       }
 
-      const m = res.metrics;
-      // ควบคุมการแสดง KPI Metric Cards ตามบทบาท (Admin, Head, Deputy, Director, Driver เท่านั้น)
-      const kpiCardsContainer = document.getElementById('kpi-cards-container');
-      const canViewKpi = currentUser && ['admin', 'head', 'deputy', 'director', 'driver'].includes(String(currentUser.role).toLowerCase());
-      if (kpiCardsContainer) {
-        kpiCardsContainer.style.display = canViewKpi ? '' : 'none';
-      }
-
-      // อัปเดตตัวเลข KPI Cards เฉพาะเมื่อได้รับสิทธิ์แสดงผล
-      if (canViewKpi && m) {
-        animateNumber('kpi-total-bookings', m.totalBookings || 0);
-        animateNumber('kpi-pending-approval', m.pendingApproval || 0);
-        animateNumber('kpi-approved', m.approved || 0);
-        animateNumber('kpi-completed', m.completed || 0);
-        animateNumber('kpi-available-vehicles', m.availableVehicles || 0);
-        animateNumber('kpi-available-drivers', m.availableDrivers || 0);
-      }
-
-      // แคชข้อมูลยานพาหนะ คนขับ และอีเวนต์สำหรับการตรวจสอบรายวัน
-      dashboardVehicles = res.vehicles || [];
-      dashboardDrivers = res.drivers || [];
-      dashboardEvents = res.calendarEvents || [];
-
-      // บันทึกลง localStorage เพื่อให้การเปิดเว็บครั้งต่อไปแสดงผลได้ทันที 0ms
-      try {
-        localStorage.setItem('vbs_dashboard_cache', JSON.stringify({
-          vehicles: dashboardVehicles,
-          drivers: dashboardDrivers,
-          calendarEvents: dashboardEvents,
-          timestamp: Date.now()
-        }));
-      } catch (e) {}
-
-      // 2. อัปเดตอีเวนต์บน FullCalendar ที่แสดงอยู่แล้วอย่างนุ่มนวล
-      if (currentCalendar) {
-        currentCalendar.removeAllEvents();
-        if (dashboardEvents.length > 0) {
-          currentCalendar.addEventSource(dashboardEvents);
-        }
-        setTimeout(() => {
-          if (currentCalendar) currentCalendar.updateSize();
-        }, 100);
-      } else {
-        renderFullCalendar(dashboardEvents);
-      }
-
-      // เรนเดอร์ Chart.js
-      if (res.charts) {
-        renderCharts(res.charts);
-      }
-
-      // 3. หาก Modal ตารางประจำวันเปิดอยู่ ให้ทำการ re-render ข้อมูลทันที
-      const modalEl = document.getElementById('dailyScheduleModal');
-      if (modalEl && modalEl.classList.contains('show') && selectedDailyDate) {
-        renderDailyScheduleContent(selectedDailyDate);
-      }
-
+      applyDashboardData(res);
       return res;
     } catch (err) {
       console.error('Error loading dashboard:', err);
@@ -8553,13 +8744,32 @@ async function initStaffAutocomplete() {
   const dropdown = document.getElementById('requesterNameDropdown');
   if (!input || !dropdown) return;
 
-  try {
-    const names = await runGAS('apiGetStaffNames');
-    if (names && Array.isArray(names) && names.length > 0) {
-      cachedStaffNames = names;
+  // 1. โหลดจาก Firebase Realtime Database ก่อนเพื่อความเร็วระดับ <50ms
+  let loadedFromFirebase = false;
+  if (window.firebaseDb) {
+    try {
+      const snap = await Promise.race([
+        window.firebaseDb.ref('vbs/staff').once('value'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+      ]);
+      const val = snap.val();
+      if (Array.isArray(val) && val.length > 0) {
+        cachedStaffNames = val;
+        loadedFromFirebase = true;
+      }
+    } catch (e) {}
+  }
+
+  // 2. หากยังไม่ได้ข้อมูลจาก Firebase ให้ดึงจาก GAS Backend (Fallback)
+  if (!loadedFromFirebase) {
+    try {
+      const names = await runGAS('apiGetStaffNames');
+      if (names && Array.isArray(names) && names.length > 0) {
+        cachedStaffNames = names;
+      }
+    } catch (e) {
+      console.warn('Could not load staff names from server:', e);
     }
-  } catch (e) {
-    console.warn('Could not load staff names from server:', e);
   }
 
   let activeIndex = -1;
@@ -8680,13 +8890,32 @@ async function initProvinceAutocomplete() {
 
   cachedProvinces = ALL_THAI_PROVINCES;
 
-  try {
-    const provs = await runGAS('apiGetProvinces');
-    if (provs && Array.isArray(provs) && provs.length > 0) {
-      cachedProvinces = provs;
+  // 1. โหลดจาก Firebase Realtime Database ก่อน (<50ms)
+  let loadedFromFirebase = false;
+  if (window.firebaseDb) {
+    try {
+      const snap = await Promise.race([
+        window.firebaseDb.ref('vbs/provinces').once('value'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+      ]);
+      const val = snap.val();
+      if (Array.isArray(val) && val.length > 0) {
+        cachedProvinces = val;
+        loadedFromFirebase = true;
+      }
+    } catch (e) {}
+  }
+
+  // 2. หากยังไม่ได้ข้อมูลจาก Firebase ให้ดึงจาก GAS Backend (Fallback)
+  if (!loadedFromFirebase) {
+    try {
+      const provs = await runGAS('apiGetProvinces');
+      if (provs && Array.isArray(provs) && provs.length > 0) {
+        cachedProvinces = provs;
+      }
+    } catch (e) {
+      console.warn('Could not load provinces from server, using local fallback:', e);
     }
-  } catch (e) {
-    console.warn('Could not load provinces from server, using local fallback:', e);
   }
 
   let activeIndex = -1;
